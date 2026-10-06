@@ -5,7 +5,7 @@ import path from 'node:path';
 export default defineConfig({
   entry: {
     'index': 'src/index.ts',
-    'components/index': 'src/components/index.ts',
+    'components/index': 'src/components/index.tsx',
     'themes/index': 'src/themes/index.ts',
     'bin/inkblot': 'src/bin/inkblot.ts',
   },

@@ -1,0 +1,309 @@
+---
+title: "Planning with Learned World Models Under Limited Data: A Record of Seven Studies"
+date: "2 October 2026"
+abstract: |
+  This project studies how an agent should make decisions when interaction with its environment is expensive, its internal model of that environment is incomplete, and new data is scarce. We concentrate on agents that plan with a learned world model: a neural network that predicts the consequences of actions, which a planning algorithm queries to compare candidate courses of action before committing to one.
+theme: "academic"
+---
+
+<Section number="1" title="Introduction" id="intro">
+
+<Subsection number="1.1" title="The problem" id="intro-prob">
+
+Many control problems of practical interest share an inconvenient property: the real system is costly to experiment with. A robot that falls may break; a wind tunnel or a fluid simulation may take hours per trial; a chemical process cannot be run thousands of times to learn by trial and error. Reinforcement learning methods that learn purely from interaction typically require millions of trials, which is not feasible in such settings.
+
+A widely studied alternative is to learn a *model* of the system from a modest amount of data and then to plan inside that model. The agent imagines the outcomes of many possible action sequences, selects the most promising, executes only the first part of it in the real system, observes what actually happened, and repeats.
+
+The approach has three well-known points of fragility:
+
+- **The model can become wrong.** The physical conditions at deployment may differ from those seen during training; a robot may carry a heavier load, or a surface may be more slippery.
+- **The model can be uncertain.** After only a few observations, several different explanations of the system's behaviour may fit the data equally well.
+- **Planning is expensive.** Imagining thousands of futures at every step costs substantial computation.
+
+<Question>
+How should an intelligent agent learn and make decisions when interaction with the real world is expensive, its current model is incomplete, and data is limited, so that it cannot simply collect millions of new examples?
+</Question>
+
+</Subsection>
+
+<Subsection number="1.2" title="Four questions and seven studies" id="intro-studies">
+
+The seven studies group into four questions: **adaptation**, **uncertainty**, **computation**, and **comparison with model-free learning**.
+
+<SummaryTable
+  caption={<><b>Table 1.</b> The seven studies and their outcomes.</>}
+  rows={[
+    {
+      id: 1,
+      title: "Planning-aware test-time adaptation",
+      subtitle: "Does weighting model updates by their relevance to the planner improve decisions after dynamics change?",
+      href: "#s1",
+      setting: "PointMaze, JEPA world model",
+      outcome: "Method no better than standard adaptation; mismatch confirmed"
+    },
+    {
+      id: 2,
+      title: "Multiple dynamics hypotheses",
+      subtitle: "Does planning against five candidate explanations of dynamics outperform planning against one?",
+      href: "#s2",
+      setting: "PointMaze, AdaJEPA",
+      outcome: "No benefit in two evaluations; cause identified"
+    },
+    {
+      id: 3,
+      title: "Action-change diagnostic",
+      subtitle: "Is the benefit of extra planning concentrated on a small fraction of states?",
+      href: "#s3",
+      setting: "DeepMind Control, TD-MPC2",
+      outcome: "Measured a proxy; superseded by Study 4"
+    },
+    {
+      id: 4,
+      title: "Counterfactual value of search",
+      subtitle: "Where does extra planning change the outcome, and can a cheap signal predict it?",
+      href: "#s4",
+      setting: "DeepMind Control, TD-MPC2",
+      outcome: "Failed its pre-registered generalisation test"
+    },
+    {
+      id: 5,
+      title: "Adaptation in a stochastic environment",
+      subtitle: "Does online adaptation help when outcomes are random but environment has not changed?",
+      href: "#s5",
+      setting: "FrozenLake 8×8",
+      outcome: "Full adaptation was harmful"
+    },
+    {
+      id: 6,
+      title: "Early exit of candidates in CEM",
+      subtitle: "Can poor candidate action sequences be discarded early without changing the planner's decision?",
+      href: "#s6",
+      setting: "PointMaze, AdaJEPA",
+      outcome: "No safe savings found"
+    },
+    {
+      id: 7,
+      title: "Learned MPC versus PPO",
+      subtitle: "At equal budget of interaction, does planning with a learned model outperform directly trained policy?",
+      href: "#s7",
+      setting: "HydroGym Kolmogorov flow",
+      outcome: "No difference at Reynolds number 200; transfer not run"
+    }
+  ]}
+/>
+
+</Subsection>
+
+</Section>
+
+<Section number="2" title="Background and Architecture" id="background">
+
+<Subsection number="2.1" title="Model-predictive control loop" id="bg-mpc">
+
+In model-predictive control (MPC), the agent does not learn a fixed mapping from situations to actions. Instead, at every decision point it searches for a good sequence of future actions by simulating candidates inside its world model.
+
+<Diagram viewBox="0 0 780 200" ariaLabel="MPC Architecture Flow">
+  <rect x="16" y="60" width="130" height="70" rx="6" className="dg-box" />
+  <text x="81" y="90" textAnchor="middle" className="dg-t">Environment</text>
+  <text x="81" y="110" textAnchor="middle" className="dg-m">real system or simulator</text>
+
+  <line x1="146" y1="95" x2="212" y2="95" className="dg-line" markerEnd="url(#ah)" />
+  <text x="179" y="85" textAnchor="middle" className="dg-m">observation</text>
+
+  <rect x="216" y="60" width="130" height="70" rx="6" className="dg-box" />
+  <text x="281" y="90" textAnchor="middle" className="dg-t">Encoder</text>
+  <text x="281" y="110" textAnchor="middle" className="dg-m">image → latent state</text>
+
+  <line x1="346" y1="95" x2="410" y2="95" className="dg-line" markerEnd="url(#ah)" />
+  <text x="378" y="85" textAnchor="middle" className="dg-m">latent</text>
+
+  <rect x="410" y="20" width="340" height="150" rx="6" className="dg-box-accent" />
+  <text x="430" y="50" className="dg-t">Planner & Model</text>
+  <text x="430" y="80" className="dg-s">Rolls out candidate actions in latent space</text>
+  <text x="430" y="105" className="dg-s">Evaluates terminal values & cost</text>
+  <text x="430" y="130" className="dg-m">Selects optimal sequence u*</text>
+</Diagram>
+
+<Aside title="Note on Latent Space Prediction">
+When the environment is observed through images, predicting every pixel of the next frame is both difficult and largely unnecessary. Modern world models therefore work in a <em>latent space</em>: an encoder network compresses each observation into a vector of a few hundred numbers.
+</Aside>
+
+</Subsection>
+
+<Subsection number="2.2" title="Mathematical Objective" id="bg-math">
+
+The energy score loss used for multi-hypothesis training balances candidate accuracy with hypothesis diversity:
+
+<Equation math="\mathcal{L}_{\text{energy}}(y, \hat{Y}) = \frac{1}{K}\sum_{k=1}^K \|y - \hat{y}_k\|_2 - \frac{1}{2K^2}\sum_{j=1}^K\sum_{k=1}^K \|\hat{y}_j - \hat{y}_k\|_2" />
+
+Here $y$ denotes the ground-truth transition, and $\hat{Y} = \{\hat{y}_1, \dots, \hat{y}_K\}$ represents the ensemble of $K$ candidate predictions.
+
+</Subsection>
+
+</Section>
+
+<Section number="3" title="Experimental Results" id="s1">
+
+<Subsection number="3.1" title="Study 1: Success rate across dynamics shifts" id="s1-res">
+
+Figure 1 shows the success rates across six dynamics conditions. Planning-sensitivity weighting was compared against standard adaptation and a baseline without adaptation.
+
+<Figure
+  id="fig-success"
+  title="Figure 1. Success rate across dynamics shifts."
+  caption="Planning-sensitivity weighting compared against standard adaptation across six environmental perturbations."
+>
+  <DotPlot
+    rows={['Default', 'Damping ×5', 'Damping ×10', 'Damping ×20', 'Mass ×0.4', 'Mass ×0.2']}
+    rowHead="Condition"
+    metric="Success rate"
+    labelW={120}
+    x={{ min: 0, max: 1, ticks: [0, 0.25, 0.5, 0.75, 1], format: "percent", label: "Success rate" }}
+    series={[
+      {
+        name: "No adaptation",
+        color: "--s0",
+        values: [
+          { v: 0.867, lo: 0.758, hi: 0.931 },
+          { v: 0.883, lo: 0.778, hi: 0.942 },
+          { v: 0.867, lo: 0.758, hi: 0.931 },
+          { v: 0.667, lo: 0.541, hi: 0.773 },
+          { v: 0.533, lo: 0.409, hi: 0.654 },
+          { v: 0.217, lo: 0.131, hi: 0.336 }
+        ]
+      },
+      {
+        name: "Standard adaptation",
+        color: "--s1",
+        values: [
+          { v: 0.883, lo: 0.778, hi: 0.942 },
+          { v: 0.883, lo: 0.778, hi: 0.942 },
+          { v: 0.867, lo: 0.758, hi: 0.931 },
+          { v: 0.600, lo: 0.474, hi: 0.714 },
+          { v: 0.417, lo: 0.301, hi: 0.543 },
+          { v: 0.183, lo: 0.106, hi: 0.299 }
+        ]
+      },
+      {
+        name: "Planning-sensitivity weighting",
+        color: "--s2",
+        values: [
+          { v: 0.883, lo: 0.778, hi: 0.942 },
+          { v: 0.883, lo: 0.778, hi: 0.942 },
+          { v: 0.867, lo: 0.758, hi: 0.931 },
+          { v: 0.667, lo: 0.541, hi: 0.773 },
+          { v: 0.367, lo: 0.256, hi: 0.493 },
+          { v: 0.250, lo: 0.158, hi: 0.372 }
+        ]
+      }
+    ]}
+    legend={true}
+    showDataTable={true}
+  />
+</Figure>
+
+</Subsection>
+
+<Subsection number="3.2" title="Study 6: Computational trade-off frontier" id="s6-frontier">
+
+Figure 2 reports the computational savings in predictor steps evaluated against the fraction of batches where the exact elite sequence was retained.
+
+<Figure
+  id="fig-frontier"
+  title="Figure 2. Frontier of predictor-step savings against exact elite preservation."
+  caption="Budget pruning versus calibrated rank gate on held-out data."
+>
+  <XYPlot
+    x={{ min: 0, max: 72, ticks: [0, 10, 20, 30, 40, 50, 60, 70], format: "percent", label: "Predictor steps saved" }}
+    y={{ min: 0, max: 100, ticks: [0, 25, 50, 75, 100], format: "percent", label: "Batches with exact elite set" }}
+    points={[
+      { x: 0, y: 100, name: "Budget 200 (no pruning)", label: "budget 200 (no pruning)", dx: 12, dy: -4 },
+      { x: 16, y: 17.4, name: "Rank budget 160", label: "160", dx: 0, dy: -12, anchor: "middle" },
+      { x: 32, y: 5.8, name: "Rank budget 120", label: "120", dx: 0, dy: -12, anchor: "middle" },
+      { x: 48, y: 1.6, name: "Rank budget 80", label: "80", dx: 0, dy: -12, anchor: "middle" },
+      { x: 68, y: 0, name: "Rank budget 30", label: "30", dx: 0, dy: -12, anchor: "middle" }
+    ]}
+    extra={[
+      { x: 0.83, y: 99.8, name: "Calibrated rank gate", label: "calibrated gate: 0.83% saved, 99.8% exact", dx: 15, dy: 20 }
+    ]}
+    legendItems={[
+      ["--s1", "Fixed prefix-rank budget"],
+      ["--s2", "Calibrated gate on held-out data"]
+    ]}
+    showDataTable={true}
+  />
+</Figure>
+
+</Subsection>
+
+</Section>
+
+<Section number="4" title="Interactive Views & Comparative Analysis" id="discussion">
+
+Interactive exploration of adaptation performance across environments:
+
+<Tabs items={[
+  {
+    label: "Walker (walk)",
+    content: (
+      <div>
+        <p>In Walker (walk), full search achieves 983 return, while policy-only yields 489.</p>
+        <Table
+          columns={[
+            { key: "arm", label: "Arm" },
+            { key: "ret", label: "Return", numeric: true },
+            { key: "ci", label: "95% Interval", numeric: true }
+          ]}
+          data={[
+            { arm: "Policy only", ret: "489", ci: "407 to 549" },
+            { arm: "One search iteration", ret: "931", ci: "917 to 944" },
+            { arm: "Full search (6 iterations)", ret: "983", ci: "978 to 989" }
+          ]}
+          highlightRows={[2]}
+        />
+      </div>
+    )
+  },
+  {
+    label: "Quadruped (walk)",
+    content: (
+      <div>
+        <p>In Quadruped (walk), one search iteration closes 60% of the gap to full search.</p>
+        <Table
+          columns={[
+            { key: "arm", label: "Arm" },
+            { key: "ret", label: "Return", numeric: true },
+            { key: "ci", label: "95% Interval", numeric: true }
+          ]}
+          data={[
+            { arm: "Policy only", ret: "806", ci: "795 to 816" },
+            { arm: "One search iteration", ret: "865", ci: "839 to 890" },
+            { arm: "Full search (6 iterations)", ret: "974", ci: "967 to 980" }
+          ]}
+          highlightRows={[2]}
+        />
+      </div>
+    )
+  }
+]} />
+
+<Collapse summary="View detailed glossary of terms">
+
+<Glossary>
+  <GlossaryItem term="World Model">
+    A learned function that, given the current state of an environment and an action, predicts the next state.
+  </GlossaryItem>
+  <GlossaryItem term="Latent State">
+    A compressed vector representation of high-dimensional observations produced by an encoder network.
+  </GlossaryItem>
+  <GlossaryItem term="Model-Predictive Control">
+    An algorithm that optimizes future action trajectories by rolling them out within an internal model.
+  </GlossaryItem>
+  <GlossaryItem term="Test-Time Adaptation">
+    Updating world model weights online using state observations gathered during real deployment.
+  </GlossaryItem>
+</Glossary>
+
+</Collapse>
+
+</Section>
