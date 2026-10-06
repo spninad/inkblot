@@ -31,6 +31,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "bun run tests/test-api.ts && bun run tests/test-edge-cases.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
