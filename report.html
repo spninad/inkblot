@@ -1,0 +1,1222 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Planning with Learned World Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap">
+<style>
+:root{
+  --bg:#fcfcfb; --surface:#ffffff; --ink:#1c1c1e; --ink-2:#47474d; --muted:#75757c;
+  --rule:#e6e6e3; --rule-strong:#cfcfcb; --accent:#2f5585; --accent-soft:#edf1f7;
+  --s0:#8b8b91; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --grid:#ececea; --axis:#cfcfcb; --band:rgba(42,120,214,0.10);
+  --serif:"Literata", Charter, Georgia, "Times New Roman", serif;
+  --sans:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#141416; --surface:#1b1b1e; --ink:#ececee; --ink-2:#bcbcc2; --muted:#8d8d94;
+    --rule:#2a2a2e; --rule-strong:#3b3b40; --accent:#93b3de; --accent-soft:#1d2533;
+    --s0:#7f7f86; --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --grid:#242427; --axis:#3b3b40; --band:rgba(57,135,229,0.16);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+    --bg:#141416; --surface:#1b1b1e; --ink:#ececee; --ink-2:#bcbcc2; --muted:#8d8d94;
+    --rule:#2a2a2e; --rule-strong:#3b3b40; --accent:#93b3de; --accent-soft:#1d2533;
+    --s0:#7f7f86; --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --grid:#242427; --axis:#3b3b40; --band:rgba(57,135,229,0.16);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:17.5px;line-height:1.68;padding-inline:20px;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+/* layout */
+.page{display:grid;grid-template-columns:minmax(0,740px);justify-content:center;gap:64px;padding-block:56px 96px}
+@media (min-width:1180px){.page{grid-template-columns:210px minmax(0,740px)}}
+.toc{display:none}
+@media (min-width:1180px){
+  .toc{display:block;position:sticky;top:calc(env(safe-area-inset-top,0px) + 32px);align-self:start;max-height:calc(100vh - 64px);overflow-y:auto;font-family:var(--sans);font-size:13px;line-height:1.4;padding-right:8px}
+  .toc-mobile{display:none}
+}
+.toc h2,.toc-mobile summary{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink);margin:0 0 10px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.toc a{display:grid;grid-template-columns:26px 1fr;color:var(--ink-2);text-decoration:none;padding:4px 6px;border-radius:4px}
+.toc a span{color:var(--muted);font-variant-numeric:tabular-nums}
+.toc a:hover{background:var(--accent-soft);color:var(--ink)}
+.toc a.active{color:var(--ink);background:var(--accent-soft)}
+.toc a.active span{color:var(--ink-2)}
+.toc .sub a{padding-left:6px}
+.toc-mobile{border-block:1px solid var(--rule);padding-block:12px;margin-block:0 40px;font-family:var(--sans);font-size:14px}
+.toc-mobile summary{cursor:pointer;margin:0}
+.toc-mobile ol{margin:12px 0 0;padding-left:20px;display:grid;gap:4px}
+.toc-mobile a{color:var(--ink-2)}
+
+main{min-width:0}
+main > section{scroll-margin-top:24px}
+
+/* title block */
+.masthead{padding-bottom:8px;margin-bottom:24px}
+h1{font-family:var(--sans);font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-.022em;margin:0 0 14px;text-wrap:balance}
+.date{font-family:var(--sans);font-size:14.5px;color:var(--muted);margin:0}
+.abstract{margin-top:40px;padding-inline:clamp(0px,4vw,36px)}
+.abstract h2{font-family:var(--sans);font-size:15px;font-weight:600;color:var(--ink);margin:0 0 8px;text-align:center}
+.abstract p{margin:0 0 12px;font-size:16.5px;color:var(--ink-2)}
+.abstract p:last-child{margin-bottom:0}
+
+/* headings & text */
+h2.sec{font-family:var(--sans);font-weight:650;font-size:25px;line-height:1.25;letter-spacing:-.015em;margin:68px 0 16px;text-wrap:balance}
+h2.sec .n{font-variant-numeric:tabular-nums;margin-right:.45em}
+h3{font-family:var(--sans);font-weight:600;font-size:18.5px;line-height:1.35;letter-spacing:-.01em;margin:36px 0 10px;text-wrap:balance}
+h3 .n{font-variant-numeric:tabular-nums;margin-right:.5em;color:var(--ink-2)}
+h4{font-family:var(--serif);font-style:italic;font-weight:400;font-size:17.5px;margin:26px 0 6px;color:var(--ink)}
+p{margin:0 0 16px;max-width:68ch}
+main ul,main ol.prose{margin:0 0 18px;padding-left:24px;max-width:66ch}
+main li{margin-bottom:8px}
+strong{font-weight:600}
+.lede{font-size:19px;color:var(--ink-2)}
+em.term{font-style:italic}
+sub,sup{line-height:0}
+.eq{font-family:var(--serif);font-size:18px;text-align:center;margin:18px 0 22px;padding:12px 8px;overflow-x:auto;color:var(--ink)}
+.eq i{font-style:italic}
+.small{font-size:15px;color:var(--ink-2)}
+
+/* question callout */
+.question{margin:20px 0 24px;padding-left:28px;max-width:64ch}
+.question p{margin:0;font-style:italic;color:var(--ink)}
+
+
+
+/* tables */
+.tablewrap{overflow-x:auto;margin:10px 0 30px}
+table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:14px;line-height:1.4}
+caption{caption-side:top;text-align:left;font-family:var(--sans);font-size:13.5px;color:var(--ink-2);padding-bottom:10px;line-height:1.5}
+caption b{color:var(--ink);font-weight:600}
+th,td{padding:8px 12px 8px 0;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+thead th{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;border-bottom:1px solid var(--rule-strong);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{font-weight:500}
+tbody tr:last-child td{border-bottom:1px solid var(--rule-strong)}
+
+
+/* figures */
+figure{margin:28px 0 36px;padding:0}
+.fig-head{font-family:var(--sans);font-size:13.5px;line-height:1.5;color:var(--ink-2);margin-bottom:12px;max-width:70ch}
+.fig-head b{color:var(--ink);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--sans);font-size:13px;color:var(--ink-2);margin:0 0 8px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.panels{display:grid;gap:18px 28px}
+.panels.side{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.panel-title{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink);margin:0 0 2px}
+.panel-sub{font-family:var(--sans);font-size:12px;color:var(--muted);margin:0 0 4px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;overflow:visible}
+figcaption{font-family:var(--sans);font-size:13px;line-height:1.55;color:var(--muted);margin-top:10px;max-width:72ch}
+details.tv{margin-top:8px;font-family:var(--sans);font-size:13px}
+details.tv summary{cursor:pointer;color:var(--accent);width:max-content}
+details.tv .tablewrap{margin:8px 0 0}
+
+svg text{font-family:var(--sans)}
+svg .tick{font-size:11px;fill:var(--muted);font-variant-numeric:tabular-nums}
+svg .axlabel{font-size:11.5px;fill:var(--ink-2)}
+svg .rowlabel{font-size:12.5px;fill:var(--ink)}
+svg .vlabel{font-size:12px;fill:var(--ink-2);font-variant-numeric:tabular-nums}
+svg .reflabel{font-size:11px;fill:var(--ink-2)}
+svg .note{font-size:11.5px;fill:var(--muted);font-style:italic}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .axis{stroke:var(--axis);stroke-width:1}
+svg .ref{stroke:var(--ink-2);stroke-width:1}
+svg .ci{stroke-width:2;stroke-linecap:round}
+svg .stem{stroke-width:2;stroke-linecap:round;opacity:.55}
+svg .band{fill:var(--band)}
+svg .hit{fill:transparent;cursor:default}
+svg .dot{stroke:var(--bg);stroke-width:2}
+
+.tip{position:fixed;z-index:10;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--rule-strong);border-radius:6px;padding:8px 10px;font-family:var(--sans);font-size:12.5px;line-height:1.45;box-shadow:0 4px 16px rgba(0,0,0,.12);max-width:260px}
+.tip b{font-weight:600}
+.tip .m{color:var(--muted)}
+
+/* diagrams */
+.diagram{overflow-x:auto;border-block:1px solid var(--rule);padding-block:14px}
+.diagram svg{display:block;min-width:640px;width:100%;height:auto}
+.dg-box{fill:var(--bg);stroke:var(--rule-strong);stroke-width:1}
+.dg-box-accent{fill:var(--bg);stroke:var(--accent);stroke-width:1}
+.dg-step{fill:var(--surface);stroke:var(--rule-strong);stroke-width:1}
+.dg-t{font-size:13px;font-weight:600;fill:var(--ink)}
+.dg-s{font-size:11.5px;fill:var(--ink-2)}
+.dg-m{font-size:11px;fill:var(--muted)}
+.dg-line{stroke:var(--ink-2);stroke-width:1.5;fill:none}
+.dg-accent{stroke:var(--accent);stroke-width:1.5;fill:none}
+.dg-b0{stroke:var(--s0);stroke-width:2;fill:none}
+.dg-b1{stroke:var(--s1);stroke-width:2;fill:none}
+.dg-b2{stroke:var(--s2);stroke-width:2;fill:none}
+.dg-arrow{fill:var(--ink-2)}
+.dg-arrow-accent{fill:var(--accent)}
+
+.sumtable td:first-child{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+.sumtable td:nth-child(2) a{font-weight:500;color:var(--ink);text-decoration:none}
+.sumtable td:nth-child(2) a:hover{color:var(--accent);text-decoration:underline}
+
+.aside{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 20px;margin:22px 0 28px;font-size:16px}
+.aside h4{margin-top:0}
+.aside p:last-child{margin-bottom:0}
+
+dl.gloss{display:grid;grid-template-columns:minmax(150px,210px) 1fr;gap:10px 22px;margin:14px 0 24px;font-size:16px}
+dl.gloss dt{font-family:var(--sans);font-weight:600;font-size:14px;padding-top:2px}
+dl.gloss dd{margin:0;max-width:60ch}
+@media (max-width:600px){dl.gloss{grid-template-columns:1fr;gap:2px 0}dl.gloss dd{margin-bottom:12px}}
+code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.86em;background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:0 4px}
+</style>
+
+<div class="page">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#abstract"><span></span>Abstract</a></li>
+    <li><a href="#intro"><span>1</span>Introduction</a></li>
+    <li><a href="#background"><span>2</span>Background</a></li>
+    <li><a href="#s1"><span>3</span>Planning-aware adaptation</a></li>
+    <li><a href="#s2"><span>4</span>Multiple dynamics hypotheses</a></li>
+    <li><a href="#s3"><span>5</span>Action-change diagnostic</a></li>
+    <li><a href="#s4"><span>6</span>Counterfactual value of search</a></li>
+    <li><a href="#s5"><span>7</span>Adaptation under stochasticity</a></li>
+    <li><a href="#s6"><span>8</span>Early exit in CEM</a></li>
+    <li><a href="#s7"><span>9</span>Learned MPC versus PPO</a></li>
+    <li><a href="#discussion"><span>10</span>General discussion</a></li>
+    <li><a href="#conclusion"><span>11</span>Conclusion</a></li>
+    <li><a href="#appA"><span>A</span>Infrastructure study</a></li>
+    <li><a href="#appB"><span>B</span>Glossary</a></li>
+    <li><a href="#appC"><span>C</span>Sources</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="masthead">
+  <h1>Planning with Learned World Models Under Limited Data: A Record of Seven Studies</h1>
+  <p class="date">2 October 2026</p>
+
+  <section class="abstract" id="abstract" aria-labelledby="abs-h">
+    <h2 id="abs-h">Abstract</h2>
+    <p>This project studies how an agent should make decisions when interaction with its environment is expensive, its internal model of that environment is incomplete, and new data is scarce. We concentrate on agents that plan with a <em>learned world model</em>: a neural network that predicts the consequences of actions, which a planning algorithm queries to compare candidate courses of action before committing to one.</p>
+    <p>Between July and September 2026 we conducted seven studies addressing four questions. Does updating the model during deployment improve decisions after the environment changes? Does maintaining several hypotheses about the environment's dynamics improve control? Can planning computation be concentrated on the few states that require it? Does planning with a learned model outperform a directly trained policy on a fluid-control task?</p>
+    <p>No proposed method produced a reliable improvement under its pre-specified criterion. The studies nevertheless established three findings of general relevance. First, reductions in a model's prediction error did not translate into a better ordering of candidate actions, which is the quantity a planner actually uses. Second, a proxy measure of the value of planning led to conclusions that were reversed by direct measurement. Third, decision thresholds calibrated on logged data shifted substantially once they were deployed in closed loop. This record describes the question, design, results and interpretation of each study for a reader with no prior familiarity with the project.</p>
+  </section>
+</header>
+
+<details class="toc-mobile">
+  <summary>Contents</summary>
+  <ol>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#background">Background</a></li>
+    <li><a href="#s1">Study 1: Planning-aware adaptation</a></li>
+    <li><a href="#s2">Study 2: Multiple dynamics hypotheses</a></li>
+    <li><a href="#s3">Study 3: Action-change diagnostic</a></li>
+    <li><a href="#s4">Study 4: Counterfactual value of search</a></li>
+    <li><a href="#s5">Study 5: Adaptation under stochasticity</a></li>
+    <li><a href="#s6">Study 6: Early exit in CEM</a></li>
+    <li><a href="#s7">Study 7: Learned MPC versus PPO</a></li>
+    <li><a href="#discussion">General discussion</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+    <li><a href="#appA">Appendix A: Infrastructure study</a></li>
+    <li><a href="#appB">Appendix B: Glossary</a></li>
+    <li><a href="#appC">Appendix C: Sources</a></li>
+  </ol>
+</details>
+
+<!-- ============ 1 INTRODUCTION ============ -->
+<section id="intro">
+<h2 class="sec"><span class="n">1</span>Introduction</h2>
+
+<h3><span class="n">1.1</span>The problem</h3>
+<p>Many control problems of practical interest share an inconvenient property: the real system is costly to experiment with. A robot that falls may break; a wind tunnel or a fluid simulation may take hours per trial; a chemical process cannot be run thousands of times to learn by trial and error. Reinforcement learning methods that learn purely from interaction typically require millions of trials, which is not feasible in such settings.</p>
+<p>A widely studied alternative is to learn a <em>model</em> of the system from a modest amount of data and then to plan inside that model. The agent imagines the outcomes of many possible action sequences, selects the most promising, executes only the first part of it in the real system, observes what actually happened, and repeats. This approach, called <em>model-predictive control</em> with a learned model, substitutes computation for real interaction.</p>
+<p>The approach has three well-known points of fragility, and each of the studies in this record examines one of them.</p>
+<ul>
+  <li><strong>The model can become wrong.</strong> The physical conditions at deployment may differ from those seen during training; a robot may carry a heavier load, or a surface may be more slippery. The model's predictions then deteriorate.</li>
+  <li><strong>The model can be uncertain.</strong> After only a few observations, several different explanations of the system's behaviour may fit the data equally well. Committing to one of them prematurely may lead to poor decisions.</li>
+  <li><strong>Planning is expensive.</strong> Imagining thousands of futures at every step costs substantial computation. It is natural to ask whether that effort is needed at every step, or only at a few critical moments.</li>
+</ul>
+<p>The project's guiding question, as stated in its planning documents, is the following.</p>
+<div class="question"><p>How should an intelligent agent learn and make decisions when interaction with the real world is expensive, its current model is incomplete, and data is limited, so that it cannot simply collect millions of new examples?</p></div>
+
+<h3><span class="n">1.2</span>Four questions and seven studies</h3>
+<p>The seven studies group into four questions. The first concerns <strong>adaptation</strong>: when conditions change, can the model be corrected during deployment in a way that improves decisions (Studies 1, 5 and, incidentally, 6)? The second concerns <strong>uncertainty</strong>: does keeping several candidate explanations of the dynamics help (Study 2)? The third concerns <strong>computation</strong>: can planning effort be allocated selectively (Studies 3, 4 and 6)? The fourth is a <strong>comparison with model-free learning</strong>: in a scientific control task, does planning through a learned model outperform a policy trained directly by reinforcement learning (Study 7)?</p>
+<p>Each study was designed to test a specific hypothesis with a pre-stated criterion for success. Several studies also specified in advance what result would cause the line of work to be discontinued. Table 1 summarises the outcome of each study.</p>
+
+<div class="tablewrap">
+<table class="sumtable">
+<caption><b>Table 1.</b> The seven studies and their outcomes.</caption>
+<thead><tr><th>Study</th><th>Question</th><th>Setting</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><a href="#s1">Planning-aware test-time adaptation</a><br><span class="small">Does weighting model updates by their relevance to the planner improve decisions after the dynamics change?</span></td><td>PointMaze, JEPA world model</td><td>Method no better than standard adaptation; mismatch confirmed</td></tr>
+<tr><td>2</td><td><a href="#s2">Multiple dynamics hypotheses</a><br><span class="small">Does planning against five candidate explanations of the dynamics outperform planning against one?</span></td><td>PointMaze, AdaJEPA</td><td>No benefit in two evaluations; cause identified</td></tr>
+<tr><td>3</td><td><a href="#s3">Action-change diagnostic</a><br><span class="small">Is the benefit of extra planning concentrated on a small fraction of states?</span></td><td>DeepMind Control, TD-MPC2</td><td>Measured a proxy; superseded by Study 4</td></tr>
+<tr><td>4</td><td><a href="#s4">Counterfactual value of search</a><br><span class="small">Measured directly, where does extra planning change the outcome, and can a cheap signal predict it on new tasks?</span></td><td>DeepMind Control, TD-MPC2</td><td>Failed its pre-registered generalisation test</td></tr>
+<tr><td>5</td><td><a href="#s5">Adaptation in a stochastic environment</a><br><span class="small">Does online adaptation help when outcomes are random but the environment has not changed?</span></td><td>FrozenLake 8×8</td><td>Full adaptation was harmful</td></tr>
+<tr><td>6</td><td><a href="#s6">Early exit of candidates in CEM</a><br><span class="small">Can poor candidate action sequences be discarded early without changing the planner's decision?</span></td><td>PointMaze, AdaJEPA</td><td>No safe savings found</td></tr>
+<tr><td>7</td><td><a href="#s7">Learned MPC versus PPO</a><br><span class="small">At an equal budget of real interaction, does planning with a learned model outperform a directly trained policy?</span></td><td>HydroGym Kolmogorov flow</td><td>No difference at Reynolds number 200; transfer not run</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3><span class="n">1.3</span>How to read this record</h3>
+<p>Section 2 introduces the concepts on which all studies rely: learned world models, model-predictive control, test-time adaptation, the environments, and the statistical conventions. Sections 3 to 9 present the seven studies. Each follows the same structure: the question and its motivation, the experimental setup, the measurements, the results, and an interpretation that states what the result does and does not establish. Section 10 draws together the findings that extend beyond any single study. A glossary of technical terms appears in Appendix B, and the source documents for every number are listed in Appendix C.</p>
+</section>
+
+<!-- ============ 2 BACKGROUND ============ -->
+<section id="background">
+<h2 class="sec"><span class="n">2</span>Background</h2>
+
+<h3><span class="n">2.1</span>Learned world models</h3>
+<p>A <em class="term">world model</em> is a function that, given the current state of an environment and an action, predicts the next state. When the environment is observed through images, predicting every pixel of the next frame is both difficult and largely unnecessary: most pixels are irrelevant to control. Modern world models therefore work in a <em class="term">latent space</em>. An <em>encoder</em> network compresses each observation into a vector of a few hundred numbers, the <em class="term">latent state</em>, and a <em>predictor</em> network forecasts the next latent state from the current one and the chosen action.</p>
+<p>Several of our studies use models of the <strong>JEPA</strong> family (Joint-Embedding Predictive Architecture). A JEPA world model is trained to predict the latent representation of the next observation, rather than its pixels. We used two publicly released models of this kind: the <strong>JEPA world model</strong> (JEPA-WM) released by Meta FAIR for the PointMaze task, and <strong>AdaJEPA</strong>, a JEPA world model released by the Agentic Learning AI Lab together with a procedure for adapting it during deployment. A third agent, <strong>TD-MPC2</strong>, is a model-based reinforcement learning agent whose world model is paired with two further learned components: a <em>policy prior</em>, which proposes an action directly, and an ensemble of <em>value functions</em>, which estimate long-term reward.</p>
+
+<h3><span class="n">2.2</span>Planning by model-predictive control</h3>
+<p>In <em class="term">model-predictive control</em> (MPC), the agent does not learn a fixed mapping from situations to actions. Instead, at every decision point it searches for a good sequence of future actions by simulating candidates inside its world model. It executes only the first action (or first few actions) of the best sequence, observes the real outcome, and searches again from the new state. Figure 1 shows the loop.</p>
+
+<figure>
+  <div class="diagram">
+  <svg viewBox="0 0 780 320" role="img" aria-label="Diagram of model-predictive control with a learned world model and optional test-time adaptation">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-arrow"/></marker>
+      <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-arrow-accent"/></marker>
+    </defs>
+    <rect x="16" y="112" width="130" height="70" rx="6" class="dg-box"/>
+    <text x="81" y="142" text-anchor="middle" class="dg-t">Environment</text>
+    <text x="81" y="162" text-anchor="middle" class="dg-m">real system or simulator</text>
+    <line x1="146" y1="147" x2="212" y2="147" class="dg-line" marker-end="url(#ah)"/>
+    <text x="179" y="137" text-anchor="middle" class="dg-m">observation</text>
+    <rect x="216" y="112" width="130" height="70" rx="6" class="dg-box"/>
+    <text x="281" y="142" text-anchor="middle" class="dg-t">Encoder</text>
+    <text x="281" y="162" text-anchor="middle" class="dg-m">image → latent state</text>
+    <line x1="346" y1="147" x2="406" y2="147" class="dg-line" marker-end="url(#ah)"/>
+    <text x="376" y="137" text-anchor="middle" class="dg-m">latent</text>
+    <rect x="410" y="20" width="354" height="228" rx="6" class="dg-box"/>
+    <text x="426" y="44" class="dg-t">Planner</text>
+    <text x="426" y="62" class="dg-m">cross-entropy method (CEM) or MPPI</text>
+    <rect x="426" y="76" width="296" height="34" rx="4" class="dg-step"/>
+    <text x="440" y="98" class="dg-s">1  Sample many candidate action sequences</text>
+    <rect x="426" y="118" width="296" height="34" rx="4" class="dg-step"/>
+    <text x="440" y="140" class="dg-s">2  Predict each outcome with the world model</text>
+    <rect x="426" y="160" width="296" height="34" rx="4" class="dg-step"/>
+    <text x="440" y="182" class="dg-s">3  Score each outcome (goal distance or reward)</text>
+    <rect x="426" y="202" width="296" height="34" rx="4" class="dg-step"/>
+    <text x="440" y="224" class="dg-s">4  Refit the sampler to the best candidates</text>
+    <path d="M722 219 H740 V93 H728" class="dg-line" marker-end="url(#ah)"/>
+    <text x="754" y="156" text-anchor="middle" class="dg-m" transform="rotate(-90 754 156)">repeat</text>
+    <path d="M587 248 V300 H81 V186" class="dg-line" marker-end="url(#ah)"/>
+    <text x="440" y="292" text-anchor="middle" class="dg-m">execute the first action of the best sequence, observe the result, and plan again</text>
+    <line x1="281" y1="182" x2="281" y2="204" class="dg-accent" marker-end="url(#aha)"/>
+    <rect x="200" y="208" width="162" height="62" rx="6" class="dg-box-accent"/>
+    <text x="281" y="230" text-anchor="middle" class="dg-t">Test-time adaptation</text>
+    <text x="281" y="248" text-anchor="middle" class="dg-m">optional: update the model</text>
+    <text x="281" y="262" text-anchor="middle" class="dg-m">on recent prediction errors</text>
+    <line x1="362" y1="226" x2="422" y2="226" class="dg-accent" marker-end="url(#aha)"/>
+  </svg>
+  </div>
+  <figcaption><b>Figure 1.</b> Model-predictive control with a learned world model. The planner repeatedly samples and scores candidate action sequences inside the model, executes only the first action of the best one, and replans from the newly observed state. Test-time adaptation, studied in Sections 3, 5 and 8, adds a step that updates the model's parameters using the error between its predictions and the transitions actually observed.</figcaption>
+</figure>
+
+<p>Two search algorithms appear in this record. The <em class="term">cross-entropy method</em> (CEM) samples a population of candidate action sequences from a Gaussian distribution, predicts and scores each one, retains the best few (the <em class="term">elites</em>), refits the Gaussian to those elites, and repeats for a fixed number of iterations. <em class="term">Model predictive path integral control</em> (MPPI), used by TD-MPC2, is similar but refits the sampling distribution using all candidates, each weighted according to its score. In both cases the number of iterations controls how much computation is spent per decision.</p>
+<p>The score assigned to a candidate depends on the task. In goal-reaching tasks such as PointMaze, it is the distance between the predicted final latent state and the latent encoding of the goal image. In reward-based tasks, it is the predicted cumulative reward, often completed with a learned estimate of the value of the state reached at the end of the imagined sequence.</p>
+<p>An important consequence of this design is that the planner does not use the world model's predictions directly. It uses them to <strong>rank</strong> candidates. A model whose predictions are imprecise but which orders candidates correctly will lead to good decisions; a model with small average prediction error that orders candidates incorrectly will not. This distinction is central to Study 1.</p>
+
+<h3><span class="n">2.3</span>Distribution shift and test-time adaptation</h3>
+<p>A <em class="term">distribution shift</em> occurs when the conditions at deployment differ from those represented in the training data. In our studies the shift is usually a change in physical parameters: the mass of the moving body, the damping (friction) in its joints, or the density of the material. Such changes alter how the system responds to the same action, so a model trained under the original physics predicts incorrectly.</p>
+<p><em class="term">Test-time adaptation</em> (TTA) attempts to correct the model while it is being used. After each executed action, the agent compares the model's prediction with what actually happened and takes a small gradient step to reduce that error, typically on a small subset of the model's parameters and using a short buffer of recent transitions. The parameters are reset to their original values at the start of each episode, so that information does not leak between episodes. The adaptation scheme used here follows the procedure published with AdaJEPA: a buffer of the five most recent transitions and one optimisation step after each replanning.</p>
+
+<h3><span class="n">2.4</span>Environments</h3>
+<p><strong>PointMaze.</strong> A small ball, simulated with the MuJoCo physics engine, must be steered through a two-dimensional maze to a goal location. The agent observes rendered images and controls the ball's velocity. An episode succeeds if the ball reaches the goal within the time limit. PointMaze is the principal testbed for Studies 1, 2 and 6, because its physical parameters can be modified precisely and because its simulator state can be saved and restored exactly.</p>
+<p><strong>DeepMind Control Suite.</strong> A standard collection of simulated locomotion and manipulation tasks. We used Walker (walk), Quadruped (walk), Cheetah (run), Fish (swim), Acrobot (swing-up) and Humanoid (walk). Each episode lasts 500 decisions and yields a <em class="term">return</em>, the sum of per-step rewards, with a maximum of about 1,000.</p>
+<p><strong>FrozenLake.</strong> A grid world of 8 × 8 cells containing holes. In the "slippery" variant used here, a chosen move is executed as intended only one third of the time; otherwise the agent slides in one of the two perpendicular directions. The environment is therefore random even though its rules never change, and its exact transition probabilities are known.</p>
+<p><strong>HydroGym Kolmogorov flow.</strong> A simulation of a two-dimensional fluid driven into turbulence by a periodic body force. The controller applies four bounded forcing inputs and is rewarded for reducing the flow's turbulent kinetic energy, with a penalty on control effort. The <em class="term">Reynolds number</em> sets how turbulent the flow is; we trained at a Reynolds number of 200 and intended to test transfer at 400.</p>
+
+<h3><span class="n">2.5</span>Statistical conventions</h3>
+<p><strong>Paired comparisons.</strong> Whenever possible, the methods being compared were evaluated on identical episodes: the same starting positions, goals, random seeds and, where applicable, the same planner randomness. Differences between methods are then computed episode by episode, which removes much of the variability due to episode difficulty.</p>
+<p><strong>Confidence intervals.</strong> Unless stated otherwise, intervals are 95% bootstrap intervals. A bootstrap interval is obtained by resampling the observed episodes with replacement many times and recording the spread of the resulting estimates. When an interval for a difference between two methods contains zero, the data do not establish that either method is better.</p>
+<p><strong>Ranking measures.</strong> <em class="term">Spearman rank correlation</em> measures agreement between two orderings, from −1 (reversed) through 0 (unrelated) to 1 (identical). <em class="term">Top-<i>k</i> overlap</em> is the fraction of the <i>k</i> candidates judged best by the model that are also among the <i>k</i> truly best. <em class="term">AUROC</em> (area under the receiver operating characteristic curve) measures how well a score separates two classes: 0.5 corresponds to chance and 1.0 to perfect separation.</p>
+<p><strong>Multiple comparisons.</strong> When many comparisons are made at the 95% level, about one in twenty will appear significant by chance alone. We report the number of comparisons alongside any isolated positive result.</p>
+</section>
+
+<!-- ============ 3 STUDY 1 ============ -->
+<section id="s1">
+<h2 class="sec"><span class="n">3</span>Study 1: Planning-aware test-time adaptation</h2>
+<h3><span class="n">3.1</span>Question and motivation</h3>
+<p>Test-time adaptation updates a world model by reducing its <em>prediction error</em>. The planner, however, uses the model to <em>rank</em> candidate action sequences. These are different objectives, and nothing guarantees that improving the first improves the second. A model may reduce its average error on features that are irrelevant to the current decision while leaving the decisive features unchanged.</p>
+<div class="question"><p>Does reducing a world model's prediction error at test time reliably improve planning? If not, does weighting the prediction error according to how strongly each feature influences the current plan improve the result?</p></div>
+<p>The study was organised to establish the premise before testing the method. It stated three hypotheses.</p>
+<ul>
+  <li><strong>H1 (mismatch).</strong> Under large dynamics shifts, ordinary adaptation reduces prediction error without a proportional improvement in candidate ranking or task success.</li>
+  <li><strong>H2 (planning-aware weighting).</strong> Weighting the prediction error by the planning objective's sensitivity to each latent feature improves ranking or success, at the same data and computation budget.</li>
+  <li><strong>H3 (shift dependence).</strong> Both effects are larger under intermediate and severe shifts than in the unaltered environment.</li>
+</ul>
+<p>The specification stated in advance that a clean null result for H2 would be informative and would justify discontinuing or reframing the line.</p>
+
+<h3><span class="n">3.2</span>Experimental setup</h3>
+<p><strong>Model and planner.</strong> We used the publicly released JEPA world model for PointMaze without modification. The planner was CEM with a horizon of six model steps, replanning after every executed action. To make the diagnostic affordable, the CEM sampling budget was reduced relative to the published configuration; the same budget was used for every method.</p>
+<p><strong>Dynamics shifts.</strong> Six conditions were evaluated: the unaltered environment ("default"), joint damping multiplied by 5, 10 and 20, and particle mass multiplied by 0.4 and 0.2. The shifts were applied directly to the physics engine. (An implementation detail proved important: MuJoCo caches the mass matrix at compile time, so changing the mass parameter alone has no effect on the simulation. The cached quantities were recomputed, and tests confirmed that the shift altered the simulated trajectories.)</p>
+<p><strong>Adaptation.</strong> All adaptive methods updated the last transformer block of the predictor (2.9 million of the model's 17.6 million parameters), using the five most recent transitions and one Adam step (learning rate 5 × 10<sup>−4</sup>) after each replanning. Parameters were reset at every episode. The methods differed only in how the prediction error of the most recent transition was weighted across latent features:</p>
+<div class="tablewrap">
+<table>
+<caption><b>Table 2.</b> The five experimental arms. All adaptive arms share the buffer, optimiser, trainable parameters and planning budget.</caption>
+<thead><tr><th>Arm</th><th>Weighting of the prediction error</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>No adaptation</td><td>The model is never updated.</td><td>Reference</td></tr>
+<tr><td>Standard adaptation</td><td>All latent features weighted equally.</td><td>The published AdaJEPA-style baseline</td></tr>
+<tr><td>Planning-sensitivity weighting</td><td>Each feature weighted by the magnitude of the gradient of the plan's cost with respect to that feature of the first predicted latent state; normalised to mean 1 and clipped to [0.1, 10].</td><td>The proposed method</td></tr>
+<tr><td>Shuffled-weight control</td><td>The same set of weights, randomly permuted across features.</td><td>Tests whether <em>which</em> features receive weight matters, or only that the weighting is non-uniform</td></tr>
+<tr><td>One-step goal-gradient control</td><td>Weights from the gradient of a one-step distance to the goal, without a multi-step rollout.</td><td>Tests whether the multi-step computation is worth its cost</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Ground-truth ranking diagnostic.</strong> The key instrument of this study measured ranking quality directly. At every second replanning, the simulator state was saved and all 64 candidate action sequences from the planner's final iteration were executed in the real simulator to obtain their true costs. The model's ranking of the candidates was then compared with the true ranking, both before and after the adaptation step, which isolates the change in ranking attributable to adaptation. Three measures were recorded: Spearman rank correlation, top-1 regret (how much worse the model's chosen candidate is than the true best), and top-10 overlap. With 64 candidates, top-10 overlap expected by chance is 10/64 = 0.156.</p>
+<p><strong>Design.</strong> Each method was evaluated on 60 episodes per condition (three seeds of 20 episodes), for 1,800 episodes in the method comparison. Every method saw the identical set of episodes with identical planner randomness; this matching was verified empirically. Confidence intervals were computed by resampling whole episodes, because successive replannings within an episode are not independent.</p>
+
+<h3><span class="n">3.3</span>Results</h3>
+<h4>Hypothesis 1: the mismatch exists</h4>
+<p>The optimisation behaved exactly as intended. All 4,320 measured updates reduced the one-step prediction error they were given. That loss, however, was nearly unrelated to ranking quality. When prediction improved, the rank correlation changed by only +0.003 on average, and 45.1% of those updates made the ranking worse. The correlation between the size of the prediction improvement and the size of the ranking improvement was 0.031 (95% CI 0.003 to 0.059); it is statistically distinguishable from zero at this sample size, but it accounts for well under one percent of the variation. Against a shift-induced drop in rank correlation of 0.39 to 0.44, adaptation recovered at most 0.017. H1 is supported.</p>
+
+<h4>Hypothesis 2: planning-aware weighting does not help</h4>
+<figure id="fig2">
+  <div class="fig-head"><b>Figure 2.</b> Success rate by dynamics condition for the reference, the standard adaptation baseline and the proposed method. Horizontal bars are 95% intervals for each rate; 60 matched episodes per point.</div>
+  <div class="chart-host" data-fig="f2"></div>
+  <figcaption>The two control arms (shuffled weights and one-step goal gradient) are omitted from the figure for legibility and appear in Table 3. Differences between the proposed method and standard adaptation are within sampling uncertainty in every condition.</figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+<caption><b>Table 3.</b> Success rate for all five arms (fraction of 60 episodes reaching the goal). The unadapted model has the highest overall rate.</caption>
+<thead><tr><th>Arm</th><th class="num">Default</th><th class="num">Damp ×5</th><th class="num">Damp ×10</th><th class="num">Damp ×20</th><th class="num">Mass ×0.4</th><th class="num">Mass ×0.2</th><th class="num">Overall</th></tr></thead>
+<tbody>
+<tr class="hl"><td>No adaptation</td><td class="num">0.867</td><td class="num">0.883</td><td class="num">0.867</td><td class="num">0.667</td><td class="num">0.533</td><td class="num">0.217</td><td class="num"><strong>0.672</strong></td></tr>
+<tr><td>Planning-sensitivity weighting</td><td class="num">0.883</td><td class="num">0.883</td><td class="num">0.867</td><td class="num">0.667</td><td class="num">0.367</td><td class="num">0.250</td><td class="num">0.653</td></tr>
+<tr><td>Standard adaptation</td><td class="num">0.883</td><td class="num">0.883</td><td class="num">0.867</td><td class="num">0.600</td><td class="num">0.417</td><td class="num">0.183</td><td class="num">0.639</td></tr>
+<tr><td>One-step goal-gradient control</td><td class="num">0.883</td><td class="num">0.867</td><td class="num">0.833</td><td class="num">0.600</td><td class="num">0.400</td><td class="num">0.117</td><td class="num">0.617</td></tr>
+<tr><td>Shuffled-weight control</td><td class="num">0.883</td><td class="num">0.883</td><td class="num">0.817</td><td class="num">0.650</td><td class="num">0.317</td><td class="num">0.117</td><td class="num">0.611</td></tr>
+</tbody>
+</table>
+</div>
+<p>The comparison for which the method was designed, planning-sensitivity weighting against standard adaptation, has a confidence interval that contains zero in all six conditions. Across all 60 paired success comparisons among the arms, exactly three intervals exclude zero; at the 95% level, three false positives are expected from 60 tests. Two of the three favour the unadapted model over an adaptive one. The change in rank correlation produced by each adaptive method was at most 0.017 in every condition, and the four methods could not be told apart on this measure. H2 is not supported. Because no method advantage appeared, the part of H3 concerning the method has no effect to attach to; the part concerning the problem is supported, since the ranking deficit grows with shift severity.</p>
+
+<h4>The finding that explains the null result</h4>
+<figure id="fig3">
+  <div class="fig-head"><b>Figure 3.</b> Ranking quality of the unadapted model, measured by replaying all 64 candidates in the simulator. Left: Spearman correlation between predicted and true candidate costs. Right: overlap between the model's ten best candidates and the true ten best; the vertical line marks the value expected by chance.</div>
+  <div class="chart-host" data-fig="f3"></div>
+  <figcaption>Horizontal bars are 95% intervals over replanning events, resampled by episode. Under four of the six conditions, the model's top-10 set overlaps the true top-10 at or below chance.</figcaption>
+</figure>
+<p>Even in the unaltered environment, the model's ordering of candidates agrees only moderately with the truth (Spearman correlation 0.457; top-10 overlap 0.279). Under shift, the ordering carries essentially no information: at damping ×10 and ×20 and at both mass reductions, the model's top-10 candidates overlap the true top-10 no more often than a random selection would. Planning-sensitivity weighting changes <em>which</em> prediction errors the update attends to. That can only help if the model's ranking contains a signal to be sharpened. When the ranking is at chance, every weighting scheme is expected to perform identically, which is what was observed.</p>
+
+<h3><span class="n">3.4</span>Interpretation</h3>
+<p>Two explanations of the null result were considered. Under the first, the adaptation update points in a direction that is irrelevant to ranking, so no amount of it would help. Under the second, the update points in a useful direction but is too small to matter, being one step on one block of the network. The evidence favours the first explanation. If the effect were real but small, larger prediction improvements should produce larger ranking improvements. They do not: at the first replanning of an episode, where the mean prediction improvement was largest (0.0106), the correlation with ranking change was −0.083; at the fifth replanning, with a much smaller improvement (0.0020), it was +0.204. This is the opposite of a dose-response relationship. The evidence is suggestive rather than decisive, and the study identified a direct test that was not run: an arm with five gradient steps per replanning and an arm that also adapts the encoder's last block.</p>
+<p>The shuffled-weight control strengthens the conclusion. Because randomly permuted weights performed as well as the computed sensitivities, the result cannot be attributed to a poor sensitivity estimate. Non-uniform weighting of this loss simply did not matter in this setting.</p>
+<p>The broader implication is that the deployment-relevant quantity, ranking, is targeted by neither the model's training objective nor its adaptation objective. The study's authors identified three directions that follow from this: training the world model with an auxiliary objective that rewards correct ordering of action sequences; test-time objectives based on the one outcome actually observed at each step, such as the executed action's realised cost; and checking whether the planner, rather than the model, contributes to the ranking failure, for example by repeating the diagnostic at the full planning budget.</p>
+
+<h3><span class="n">3.5</span>Limitations</h3>
+<ul>
+  <li>The results concern one model, one planner, one environment, and one adaptation configuration (last predictor block, one step per replanning, five-transition buffer).</li>
+  <li>The reduced planning budget was identical across methods, so comparisons are fair, but it may depress absolute ranking quality.</li>
+  <li>Ranking quality and success do not correspond perfectly across conditions. Within the damping ×10 condition, episodes with better-than-median ranking succeeded 97% of the time against 77% for the rest; yet across conditions, damping ×10 had near-chance ranking and a success rate (0.85 to 0.87) close to that of the default environment. Success in PointMaze may therefore tolerate substantial ranking error when many candidates are adequate.</li>
+</ul>
+</section>
+
+<!-- ============ 4 STUDY 2 ============ -->
+<section id="s2">
+<h2 class="sec"><span class="n">4</span>Study 2: World models with multiple dynamics hypotheses</h2>
+<h3><span class="n">4.1</span>Question and motivation</h3>
+<p>A few observations of a system are often consistent with several different physical explanations. A ball that moves slowly after a push may be heavy, or it may be subject to strong friction; the two explanations agree on the first few steps but diverge later. A model that commits to a single explanation may plan well for the wrong world. An alternative is to keep a small set of candidate explanations, weight them by how well each accounts for the evidence, and choose actions that perform well on the weighted set. As further observations arrive, the weights shift towards the correct explanation.</p>
+<div class="question"><p>Can a pretrained world model be extended to maintain several coherent hypotheses about the current dynamics from a short observed trajectory, and does planning against five such hypotheses produce better control than planning against one?</p></div>
+
+<h3><span class="n">4.2</span>Method</h3>
+<p><strong>Hypotheses as vectors.</strong> A hypothesis is a learned 32-dimensional vector that summarises one plausible way the environment evolves. It is not a human-readable parameter such as "damping equals 2"; the model must learn what the vector encodes.</p>
+<p><strong>Injecting a hypothesis into the model.</strong> The released AdaJEPA encoder and predictor were kept frozen. Small <em>residual adapters</em> (bottleneck width 64) were inserted after the predictor's fourth and fifth transformer blocks; each adapter adds a correction that depends on both the current internal representation and the hypothesis vector. The adapters' output layers were initialised to zero, so that before training the extended model reproduces the released model exactly.</p>
+<p><strong>Generating hypotheses.</strong> A recurrent network reads a short <em>support</em> trajectory of five observed transitions and, combined with independent random noise, produces <i>K</i> candidate vectors and a prior probability for each. The noise makes the candidates distinct alternatives rather than copies. It also enables an exactly nested comparison: with the same random seed, the single candidate produced when <i>K</i> = 1 is identical to the first of the five produced when <i>K</i> = 5, so the only difference between the two arms is the number of available hypotheses.</p>
+<p><strong>Training.</strong> Training data came from nine combinations of density and damping (each scaled by 0.5, 1 or 2), with 32 episodes per combination. The dynamics labels were never shown to the model. For each training example, the model generated five hypotheses from a support segment and was scored on how well it predicted a later, non-overlapping segment of ten transitions. The objective was a <em>soft minimum</em> over hypotheses: it rewards the model when at least one hypothesis explains the whole segment well (temperature 0.5). Training ran for 50,000 steps.</p>
+<p><strong>Belief and planning.</strong> During an episode, the candidate vectors are fixed after the support segment. As each new transition is observed, the weight of each hypothesis is updated by Bayes' rule, using a Gaussian likelihood of that hypothesis's prediction error; the likelihood variance (0.037) was chosen once on validation data and shared by both arms. To score a candidate action sequence, the planner simulates it separately under every hypothesis and averages the resulting costs using the current weights. Hypotheses are never averaged inside the model, because an average of two incompatible dynamics need not describe any real world.</p>
+<p><strong>Evaluation.</strong> Three conditions were tested: canonical dynamics, and two shifts held out from training, low density (×0.2) and high damping (×20). For each condition and arm, three paired seeds of 50 episodes were run, 900 episodes in total. The planner was CEM with a horizon of 25 actions, 200 candidates, 20 elites and 10 iterations, replanning every 5 actions.</p>
+
+<h3><span class="n">4.3</span>First evaluation: no control benefit</h3>
+<p>Five hypotheses did not reliably outperform one (Figure 4, blue). The success-rate differences were +2.7 percentage points on canonical dynamics, +1.3 on low density and −2.7 on high damping, with every interval containing zero. Planning with five hypotheses took 3.1 to 3.5 times longer per planning iteration.</p>
+<p>At first sight the belief diagnostics appeared healthy. With five hypotheses, the <em class="term">effective number of candidates</em> (the exponential of the belief entropy, equal to 1 when all weight is on one hypothesis and 5 when weight is uniform) remained between 3.84 and 4.01, and the largest weight stayed near 0.42. This rules out the belief collapsing onto a single hypothesis. It does not, however, establish that the five hypotheses were actually different. Balanced weights arise both when hypotheses are genuinely distinct and when they are nearly identical and the likelihood cannot separate them.</p>
+
+<figure id="fig4">
+  <div class="fig-head"><b>Figure 4.</b> Change in success rate from planning with five hypotheses instead of one, for the original generator and for the generator retrained with an energy score (Section 4.4). Points are paired differences over 150 matched episodes; bars are 95% paired bootstrap intervals (20,000 resamples).</div>
+  <div class="chart-host" data-fig="f4"></div>
+  <figcaption>All six intervals contain zero. The two generators differ greatly in the diversity of their predictions (Figure 5) but produce the same control outcome.</figcaption>
+</figure>
+
+<h3><span class="n">4.4</span>Diagnosis: the hypotheses had collapsed</h3>
+<p>A follow-up measured the diversity of the hypotheses directly, treating the five as an ensemble forecast of the next physical state (position and velocity). Two standard measures of ensemble quality were used.</p>
+<ul>
+  <li>The <strong>spread–skill ratio</strong> compares the spread among ensemble members with the error of their average. For a well-calibrated ensemble it is close to 1; values far below 1 indicate an ensemble that is overconfident, its members clustered together while the truth lies elsewhere.</li>
+  <li><strong>Truth in hull</strong> is the fraction of cases in which the true outcome falls within the range spanned by the members. For five members drawn from the correct distribution, the expected value is 4/6, or 66.7%.</li>
+</ul>
+<p>The original generator had collapsed. Its spread–skill ratio was 0.020, and the truth fell inside the range of its five predictions only 2% of the time. Five hypotheses were, in effect, five copies of one, which explains why they did not help the planner.</p>
+<p>To determine whether the collapse reflected a limit of the architecture or of the training objective, three objectives were compared on the same model and data. The <strong>mixture objective</strong> was the original soft minimum. The <strong>mean-over-candidates</strong> objective gives every hypothesis an equal share of the training signal. The <strong>energy score</strong> is a <em class="term">strictly proper scoring rule</em> for ensembles, meaning that its expected value is optimised only when the ensemble's distribution matches the true distribution of outcomes. For ensemble members <i>X</i>, <i>X′</i> and observed outcome <i>y</i>, it is</p>
+<div class="eq">ES = 𝔼 ‖<i>X</i> − <i>y</i>‖ − ½ 𝔼 ‖<i>X</i> − <i>X′</i>‖</div>
+<p>The first term draws each member towards the observed outcome; the second term rewards members for differing from one another. The mixture objective has no equivalent of the second term. The energy-score model was obtained by continuing training from the mixture checkpoint for 5,000 steps; the mean-over-candidates model was trained from scratch for 3,000 steps.</p>
+
+<figure id="fig5">
+  <div class="fig-head"><b>Figure 5.</b> Diversity of the five hypotheses under each training objective, on worlds from the training distribution and on held-out worlds. The vertical line marks the value expected of a calibrated five-member ensemble. The spread–skill ratio is drawn on a logarithmic scale.</div>
+  <div class="legend" data-legend="f5"></div>
+  <div class="chart-host" data-fig="f5"></div>
+  <figcaption>"Random vectors" passes random hypothesis vectors through the mixture-trained adapters, which shows how much diversity the adapters can transmit at all. It was measured on training-distribution worlds only.</figcaption>
+</figure>
+
+<p>The energy score removed the collapse; the mean-over-candidates objective did not (Figure 5). Within the training distribution, the energy-score ensemble reached a spread–skill ratio of 1.001 and placed the truth inside its range 64.8% of the time, close to the calibrated 66.7%. Its forecasts also became more accurate, not merely more dispersed: the continuous ranked probability score for position and velocity fell from 0.098 to 0.060. On held-out worlds, the ensemble remained somewhat overconfident (spread–skill ratio 0.486; truth in hull 49%), but was roughly fifty times better dispersed than the original. Equal weighting alone left the ensemble collapsed, which indicates that the repulsive term of the energy score is what restores diversity.</p>
+
+<h3><span class="n">4.5</span>Second evaluation: diverse predictions, same control result</h3>
+<p>The full 900-episode evaluation was repeated with the energy-trained generator, using the identical protocol and the same likelihood variance. The control result was again null (Figure 4, orange): +0.7, +4.0 and −3.3 percentage points, all intervals containing zero, at 4.3 times the planning cost.</p>
+<div class="tablewrap">
+<table>
+<caption><b>Table 4.</b> Belief concentration and planning cost with five hypotheses. The effective number of candidates falls from about four to about one once the hypotheses become distinct.</caption>
+<thead><tr><th>Generator</th><th>Condition</th><th class="num">Effective candidates (of 5)</th><th class="num">Largest weight</th><th class="num">Planning time vs. one hypothesis</th></tr></thead>
+<tbody>
+<tr><td>Original (mixture)</td><td>Canonical</td><td class="num">4.00</td><td class="num">0.42</td><td class="num">3.5×</td></tr>
+<tr><td>Original (mixture)</td><td>Low density</td><td class="num">3.84</td><td class="num">0.44</td><td class="num">3.5×</td></tr>
+<tr><td>Original (mixture)</td><td>High damping</td><td class="num">4.01</td><td class="num">0.42</td><td class="num">3.1×</td></tr>
+<tr><td>Energy score</td><td>Canonical</td><td class="num">1.16</td><td class="num">0.96</td><td class="num">4.3×</td></tr>
+<tr><td>Energy score</td><td>Low density</td><td class="num">1.17</td><td class="num">0.95</td><td class="num">4.5×</td></tr>
+<tr><td>Energy score</td><td>High damping</td><td class="num">1.16</td><td class="num">0.95</td><td class="num">4.0×</td></tr>
+</tbody>
+</table>
+</div>
+<p>What changed was the belief. With distinct hypotheses, the likelihood could now tell them apart, and at the inherited variance of 0.037 it committed almost immediately to one of them (effective number 1.16; largest weight 0.95). The planner therefore used essentially a single hypothesis after the first few observations, and the additional hypotheses could not influence decisions. A three-episode check with a variance of 1.0 kept weight on about two hypotheses throughout the episode, but this setting was not used in a full evaluation.</p>
+
+<h3><span class="n">4.6</span>Interpretation</h3>
+<p>The study yields two conclusions. As a method for control, multi-hypothesis planning showed no benefit in either evaluation and cost three to four times more computation. As a matter of representation, it established a clear result: a generator trained with a winner-take-all objective collapses, the collapse is invisible to belief-entropy diagnostics, and a strictly proper ensemble score repairs it. <strong>Balanced belief weights are not evidence of diverse hypotheses</strong>, and diversity must be measured in the predictions themselves.</p>
+<p>The remaining open question is whether a less confident likelihood would allow the diverse hypotheses to affect decisions. That is a calibration choice rather than a new method, and the project's internal review judged that it did not justify building a publication on this line.</p>
+<h4>Limitations</h4>
+<ul>
+  <li>The hypothesis model was trained once (one training seed). The three evaluation seeds vary episodes, not training.</li>
+  <li>The energy-score model was obtained by continuing from the collapsed checkpoint rather than by training from scratch.</li>
+  <li>In the evaluation logs, the one-step and open-loop prediction errors are numerically identical, which indicates an instrumentation defect in the evaluator; no conclusion here depends on that measure.</li>
+</ul>
+</section>
+
+<!-- ============ 5 STUDY 3 ============ -->
+<section id="s3">
+<h2 class="sec"><span class="n">5</span>Study 3: Is extra planning concentrated on few states? An action-change diagnostic</h2>
+<h3><span class="n">5.1</span>Question and motivation</h3>
+<p>TD-MPC2 can act in two ways. The cheap way is to run its policy prior once, a single forward pass of a neural network. The expensive way is to run MPPI search: sample many action sequences, simulate them in the world model, score them, refine, and repeat, by default for six iterations. Search yields better actions but costs roughly ten times more computation per step.</p>
+<p>If the benefit of search were concentrated on a small number of critical states, an agent could detect those states with an inexpensive signal and search only there, obtaining nearly the performance of full search for a fraction of its cost. This idea, known as adaptive computation or meta-reasoning, has close precedents in the literature (Adaptive Lookahead, AdaMVE, AdaReP and BMPC); the distinctive claim to be tested was that the benefit of search is <em>concentrated</em>.</p>
+<div class="question"><p>Is the benefit of extra search concentrated on a small fraction of states, and can a cheap signal identify those states well enough to skip search elsewhere without loss of return?</p></div>
+
+<h3><span class="n">5.2</span>Setup</h3>
+<p>We used the official pretrained TD-MPC2 agents (five million parameters) for Walker and Quadruped, with weights frozen and no training of any kind. Search horizon was three steps, with the default budget of six MPPI iterations. Five arms were evaluated in closed loop, each on ten episodes:</p>
+<ul>
+  <li><strong>Policy only</strong>: execute the policy prior at every step;</li>
+  <li><strong>One search iteration</strong>: execute the action after a single MPPI iteration;</li>
+  <li><strong>Full search</strong>: the default six iterations;</li>
+  <li><strong>Signal-gated search</strong>: use the policy when a cheap signal is below a threshold, and full search otherwise, with the threshold set to skip search on half of all steps;</li>
+  <li><strong>Random skipping</strong>: skip search on the same fraction of steps, chosen at random.</li>
+</ul>
+<p><strong>Label.</strong> A step was labelled as one where "search mattered" if the action chosen by full search differed from the policy's action by more than the planner's own noise floor. The noise floor was estimated by planning twice from the same state on about 5% of steps and taking the median difference between the two resulting actions. This label measures whether search <em>changes the action</em>; it does not measure whether the change improves the outcome. The study's specification acknowledged this and called for direct measurement as a follow-up.</p>
+<p><strong>Concentration.</strong> The <em class="term">Lorenz top-20% share</em> is the fraction of all excess action disagreement that occurs in the 20% of steps with the most disagreement. A uniform distribution gives 0.2 and complete concentration gives 1.0. The pre-specified requirement for "concentrated" was a share of at least 0.5.</p>
+<p><strong>Candidate signals.</strong> Four inexpensive signals were scored: the spread of the MPPI sampling distribution after one iteration (which requires paying for one iteration), the entropy of the policy prior, the disagreement among the agent's value-function ensemble at the policy's proposed action, and the world model's prediction error on the previous step. Two uninformative signals (elapsed time and the magnitude of the observation) served as baselines. Ranking quality was measured on held-out episodes, not held-out steps, because adjacent steps within an episode are strongly correlated.</p>
+
+<h3><span class="n">5.3</span>Results</h3>
+<figure id="fig6">
+  <div class="fig-head"><b>Figure 6.</b> Episode return for each arm. Points are means over 10 episodes; bars are 95% bootstrap intervals. The signal-gated arm uses the spread of the search distribution after one iteration.</div>
+  <div class="chart-host" data-fig="f6"></div>
+  <figcaption>Full search roughly doubles the policy's return on Walker. On both tasks the signal-gated arm retains more return than random skipping at the same rate.</figcaption>
+</figure>
+<p>Search is valuable: full search raised return from 489 to 983 on Walker and from 806 to 974 on Quadruped. On Walker a single iteration already recovered most of that gain (931), whereas on Quadruped the later iterations still mattered.</p>
+<p>The benefit, however, was not concentrated by the pre-specified measure. Search changed the action on 83% of Walker steps and 95% of Quadruped steps, and the Lorenz share was 0.45 and 0.38, below the 0.5 requirement. The best signal, search spread after one iteration, ranked action changes above chance (AUROC 0.70 and 0.77) and above the uninformative baselines. In closed loop the gated arm outperformed random skipping on both tasks (960 against 888 on Walker; 970 against 940 on Quadruped) and stayed within 5% of full search.</p>
+
+<h3><span class="n">5.4</span>Interpretation</h3>
+<p>Following its pre-specified decision rule, the study concluded that adaptive skipping was the wrong tool, because search changes the action almost everywhere. A later revision of the verdict, made on the same data, relaxed that criterion on the grounds that the gate outperformed random skipping. The two verdicts rested on the same proxy label, and neither could be adjudicated without knowing whether changing the action actually changes the outcome. Study 4 was designed to answer that question directly.</p>
+</section>
+
+<!-- ============ 6 STUDY 4 ============ -->
+<section id="s4">
+<h2 class="sec"><span class="n">6</span>Study 4: The counterfactual value of search, and a pre-registered generalisation test</h2>
+<h3><span class="n">6.1</span>Question</h3>
+<div class="question"><p>At a particular state, how much does extra search change the return the agent actually obtains? Is that value concentrated on few states, and does a cheap signal predict it on tasks it was not developed on?</p></div>
+
+<h3><span class="n">6.2</span>The counterfactual probe</h3>
+<p>The measurement answers the question by intervention. At every 25th step of an episode run with full search, the exact simulator state and the planner's internal state are saved. From that identical state, three branches are run, each choosing its first action with a different amount of search (zero, one or six MPPI iterations) and then continuing for 20 steps with full search. The discounted return of each branch is recorded (discount factor 0.99), after which the saved state is restored exactly and the real episode continues. Restoration was verified to be exact, so probing does not disturb the episode it measures. Figure 7 shows the procedure.</p>
+
+<figure>
+  <div class="diagram">
+  <svg viewBox="0 0 780 270" role="img" aria-label="Diagram of the counterfactual probe: the episode is paused, three branches are run from an identical saved state, and the state is restored">
+    <defs>
+      <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-arrow"/></marker>
+    </defs>
+    <text x="20" y="34" class="dg-s">real episode (full search)</text>
+    <line x1="20" y1="50" x2="756" y2="50" class="dg-line" marker-end="url(#ah2)"/>
+    <circle cx="170" cy="50" r="6" style="fill:var(--accent)"/>
+    <text x="182" y="36" class="dg-t">step t: save simulator and planner state</text>
+    <circle cx="580" cy="50" r="5" style="fill:var(--surface);stroke:var(--ink-2);stroke-width:1.5"/>
+    <text x="580" y="36" text-anchor="middle" class="dg-m">next probe at t + 25</text>
+    <text x="250" y="72" class="dg-m">state restored exactly; episode continues</text>
+    <path d="M170 56 C 175 100, 190 118, 230 118 H 590" class="dg-b0"/>
+    <path d="M170 56 C 178 130, 195 168, 230 168 H 590" class="dg-b1"/>
+    <path d="M170 56 C 180 160, 198 218, 230 218 H 590" class="dg-b2"/>
+    <rect x="236" y="111" width="14" height="14" rx="2" style="fill:var(--s0)"/>
+    <rect x="236" y="161" width="14" height="14" rx="2" style="fill:var(--s1)"/>
+    <rect x="236" y="211" width="14" height="14" rx="2" style="fill:var(--s2)"/>
+    <text x="260" y="110" class="dg-s">first action with 0 search iterations (policy only)</text>
+    <text x="260" y="160" class="dg-s">first action after 1 search iteration</text>
+    <text x="260" y="210" class="dg-s">first action after 6 search iterations</text>
+    <text x="598" y="122" class="dg-t">R₀</text>
+    <text x="598" y="172" class="dg-t">R₁</text>
+    <text x="598" y="222" class="dg-t">R₆</text>
+    <text x="410" y="250" text-anchor="middle" class="dg-m">each branch then continues for 20 steps with full search; R is its discounted return</text>
+    <line x1="636" y1="112" x2="636" y2="226" style="stroke:var(--rule-strong);stroke-width:1"/>
+    <text x="652" y="164" class="dg-t">Δ = R₆ − R₁</text>
+    <text x="652" y="182" class="dg-m">value of extra search</text>
+    <text x="652" y="196" class="dg-m">at this state</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 7.</b> The counterfactual probe. The label Δ is a difference in realised return between otherwise identical futures, rather than a difference between actions. Each task contributes 200 probes (10 episodes of 500 steps, one probe every 25 steps).</figcaption>
+</figure>
+<p>The label is myopic by design: it measures the value of one better-informed action followed by a common continuation, not the value of better actions sustained over an entire episode. The consequences of this choice are discussed in Section 6.7.</p>
+
+<h3><span class="n">6.3</span>Phase 1: the proxy measured the wrong quantity</h3>
+<div class="tablewrap">
+<table>
+<caption><b>Table 5.</b> The same two tasks described by the action-change proxy (Study 3) and by the counterfactual label.</caption>
+<thead><tr><th>Quantity</th><th class="num">Walker</th><th class="num">Quadruped</th></tr></thead>
+<tbody>
+<tr><td>Steps where search changed the action (proxy)</td><td class="num">83%</td><td class="num">95%</td></tr>
+<tr><td>Lorenz top-20% share, proxy</td><td class="num">0.45</td><td class="num">0.38</td></tr>
+<tr><td>Median realised |Δ|</td><td class="num">0.0057</td><td class="num">0.0065</td></tr>
+<tr><td>States with |Δ| &gt; 0.5</td><td class="num">9 of 200 (4.5%)</td><td class="num">10 of 200 (5.0%)</td></tr>
+<tr><td>… of which search helped / hurt</td><td class="num">6 / 3</td><td class="num">5 / 5</td></tr>
+<tr><td>Lorenz top-20% share, realised |Δ|</td><td class="num">0.961</td><td class="num">0.968</td></tr>
+</tbody>
+</table>
+</div>
+<p>Two results were invisible to the proxy. First, the concentration reverses. Extra search changes the action at nearly every step but changes the outcome at almost none; measured on realised return, the benefit is highly concentrated (Lorenz share 0.96 and 0.97). The proxy had been measuring planner variability. Second, search is not monotone. At a third to a half of the high-stakes states, six iterations produced a <em>worse</em> outcome than one.</p>
+<p>A zero-cost signal located the high-stakes states. On held-out episodes, disagreement among the value-function ensemble separated states with |Δ| &gt; 0.5 from the rest perfectly (AUROC 1.000 on both tasks). The signal that Study 3 had selected, search spread after one iteration, performed poorly under the real label (0.638 on Walker and 0.211 on Quadruped; the latter means its fitted direction reversed on held-out data). Ranking states by value-ensemble disagreement, the top 10% of states contained about 92% of the total realised gain on both tasks, an upper bound on what any gate using this signal could capture.</p>
+
+<h3><span class="n">6.4</span>Phase 2: closed-loop test on the original tasks</h3>
+<p>A gate was then deployed: full search when value-ensemble disagreement exceeds a threshold, the policy otherwise. The threshold was fitted on logged full-search episodes to trigger search on about 10% of steps. Deployed in closed loop, it triggered search on 42% to 53% of steps. Skipping search changes the trajectory and leads the agent into states with higher disagreement. The first comparison was therefore invalid, because it compared a gate searching half the time against random skipping at 10%; it was discarded, and random skipping was re-run at the gate's realised rate.</p>
+<figure id="fig8">
+  <div class="fig-head"><b>Figure 8.</b> Closed-loop return with the value-ensemble gate, including the high-headroom Cheetah task from the generalisation set (Section 6.6). Points are means over 10 episodes; bars are 95% intervals. Random skipping searches at the same rate as the gate: 53% (Walker), 41% (Quadruped) and 62% (Cheetah) of steps.</div>
+  <div class="chart-host" data-fig="f8"></div>
+  <figcaption>On Quadruped the gate outperforms matched random skipping with non-overlapping intervals; on Walker the two are indistinguishable; on Cheetah the gate is worse than random skipping.</figcaption>
+</figure>
+<p>On Quadruped the gate retained 97% of full-search return (948 against 974), outperformed random skipping (927) and the one-iteration budget (865), and did so at about a quarter of full search's time per action. On Walker it matched random skipping and was outperformed by one search iteration, which is also cheaper; on this task the benefit of search is exhausted after the first iteration. At this stage the hypothesis appeared supported with a scoping condition. The next phase showed that conclusion to be premature.</p>
+
+<h3><span class="n">6.5</span>Phase 3: pre-registration</h3>
+<p>The evidence so far had two weaknesses: only nine or ten high-stakes events per task, so an AUROC of 1.000 rested on four or five held-out positives, and a threshold for "high-stakes" chosen after the distribution had been seen. Before any new data was collected, a decision rule was written down and committed to version control:</p>
+<ul>
+  <li><strong>C1, concentration:</strong> Lorenz top-20% share of at least 0.5.</li>
+  <li><strong>C2, ranking:</strong> held-out AUROC of value-ensemble disagreement of at least 0.90 across the whole range of high-stakes thresholds τ ∈ {0.2, 0.3, 0.5, 0.75, 1.0}, not at a single favourable point.</li>
+  <li><strong>C3, ordering:</strong> value-ensemble disagreement outperforms search spread after one iteration.</li>
+  <li><strong>C4, closed loop:</strong> the gate outperforms matched random skipping.</li>
+  <li><strong>Power floor:</strong> a task with fewer than five high-stakes events in a held-out fold is excluded rather than scored.</li>
+  <li><strong>Kill condition:</strong> if C2 fails on two or more tasks, the two-task result is task-specific and no paper is to be built on it.</li>
+</ul>
+<p>Four tasks were selected in advance to span action dimensionality and control character: Cheetah (run; 6 action dimensions), Humanoid (walk; 21), Fish (swim; 5) and Acrobot (swing-up; 1, underactuated). The original two tasks were also re-run with a second set of released checkpoints.</p>
+
+<h3><span class="n">6.6</span>Phase 4: the generalisation test</h3>
+<p>The tasks differ in how much of the benefit of search comes from iterations beyond the first. The <em class="term">headroom</em> of a task is the fraction of the gain from policy to full search that is contributed by iterations two to six. It was 0.11 for Walker and Acrobot, 0.62 for Cheetah, 0.65 for Quadruped, 0.75 for Fish and 0.99 for Humanoid, whose policy prior scores about 2 out of 1,000 so that search does almost all of the work.</p>
+
+<div class="tablewrap">
+<table>
+<caption><b>Table 6.</b> The pre-registered rule applied. "Capture at 10%" is the share of total realised gain contained in the 10% of states ranked highest by value-ensemble disagreement; it is an upper bound for any gate using this signal.</caption>
+<thead><tr><th>Task</th><th class="num">Headroom</th><th class="num">Median |Δ|</th><th class="num">Lorenz share</th><th class="num">AUROC range over τ</th><th class="num">Capture at 10%</th><th>C2</th></tr></thead>
+<tbody>
+<tr><td>Walker, seed 1</td><td class="num">0.11</td><td class="num">0.0057</td><td class="num">0.961</td><td class="num">1.000–1.000</td><td class="num">0.92</td><td>Pass</td></tr>
+<tr><td>Walker, seed 2</td><td class="num"></td><td class="num">0.0059</td><td class="num">0.950</td><td class="num">0.980–0.997</td><td class="num">0.93</td><td>Pass</td></tr>
+<tr><td>Quadruped, seed 1</td><td class="num">0.65</td><td class="num">0.0065</td><td class="num">0.968</td><td class="num">1.000–1.000</td><td class="num">0.92</td><td>Pass</td></tr>
+<tr><td>Quadruped, seed 2</td><td class="num"></td><td class="num">0.0054</td><td class="num">0.959</td><td class="num">0.979–1.000</td><td class="num">0.79</td><td>Pass</td></tr>
+<tr class="hl"><td>Cheetah</td><td class="num">0.62</td><td class="num">0.1459</td><td class="num">0.665</td><td class="num">0.557–0.822</td><td class="num">0.33</td><td><strong>Fail</strong></td></tr>
+<tr class="hl"><td>Fish</td><td class="num">0.75</td><td class="num">0.0231</td><td class="num">0.780</td><td class="num">0.556–0.680</td><td class="num">0.07</td><td><strong>Fail</strong></td></tr>
+<tr class="hl"><td>Humanoid</td><td class="num">0.99</td><td class="num">0.3086</td><td class="num">0.648</td><td class="num">0.509–0.973</td><td class="num">0.36</td><td><strong>Fail</strong></td></tr>
+<tr><td>Acrobot</td><td class="num">0.11</td><td class="num">0.0000</td><td class="num">0.999</td><td class="num">no high-stakes states</td><td class="num">—</td><td>Excluded</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>The ranking criterion failed on three of the four new tasks, and the pre-registered kill condition was met.</strong> The collapse of capture at 10%, from about 0.92 to 0.33, 0.07 and 0.36, is decisive because it is an upper bound: no implementation of a gate based on this signal could have recovered the value on those tasks. The second checkpoints reproduced the original result (AUROC 0.993 and 0.979), so the original effect was real rather than a small-sample artefact. It was specific to those tasks. In closed loop on Cheetah (Figure 8), the gate obtained 660 against 783 for random skipping at the same rate. The intervals are wide with ten episodes, so this is best read as a clear absence of benefit rather than a firmly established loss.</p>
+
+<figure id="fig9">
+  <div class="fig-head"><b>Figure 9.</b> Left: typical size of the value of extra search (median |Δ| over 200 probes, logarithmic scale). Right: share of the total realised gain captured by the top 10% of states ranked by value-ensemble disagreement.</div>
+  <div class="legend" data-legend="f9"></div>
+  <div class="chart-host" data-fig="f9"></div>
+  <figcaption>The tasks on which the signal succeeds are those on which extra search almost never matters. Acrobot has no state with a meaningful effect of search and was excluded under the pre-registered power floor.</figcaption>
+</figure>
+
+<h3><span class="n">6.7</span>Interpretation</h3>
+<p>The pre-registration had guessed that headroom would distinguish the tasks on which the method works. It does not: Cheetah, Fish and Humanoid have high headroom and fail, while Quadruped has high headroom and passes. The variable that separates them is the <strong>scale of the counterfactual</strong>. Walker and Quadruped are near saturation: the agent already scores 974 to 983 of about 1,000, almost every state is easy, and the few difficult states stand out sharply against a near-zero background. That is precisely the regime in which a cheap uncertainty signal can locate them. On Cheetah and Humanoid, the typical value of search is 25 to 50 times larger and is spread across the episode; at the lowest threshold, 154 of 200 Humanoid states qualify as high-stakes. There is no sparse tail to exploit.</p>
+<p>The mechanism therefore works where it is not needed, on agents that are succeeding already, and fails where the computation would pay, on tasks where planning carries the policy. A sparse set of high-stakes states is a property of saturated agents on easy tasks, not a general property of model-predictive control.</p>
+<h4>Methodological observations</h4>
+<ul>
+  <li><strong>Concentration requires a magnitude condition.</strong> Acrobot scores a Lorenz share of 0.999, perfect concentration of an effect that is negligible everywhere. The measure describes where value lies, not whether any exists.</li>
+  <li><strong>A myopic label can reverse sign.</strong> On Fish, the summed counterfactual value is slightly negative (+7.79 against −8.30), yet full search clearly outperforms one iteration in closed loop (743 against 599). A single intervention misses benefits that accumulate through consistently better actions. Longer probes on Walker and Quadruped (100-step continuations) located most of the effect at the very start of the episode, when the gait is initiated; mid-episode effects were below 0.02 in magnitude.</li>
+  <li><strong>Open-loop calibration does not transfer to closed loop.</strong> The 10% search target became 42–53% once deployed.</li>
+  <li><strong>An absolute threshold transfers poorly across tasks whose effect sizes differ fifty-fold.</strong> An exploratory, explicitly post hoc re-analysis with a per-task relative threshold (top 5% of |Δ|) gave AUROC 1.000 on the original tasks and 0.62 to 0.92 on the new ones; the conclusion is unchanged.</li>
+</ul>
+<p>The total cost of reaching this conclusion was about three hours of GPU time, because the kill condition had been fixed in advance and was honoured. A publication plan approved on 4 September 2026 on the strength of the two original tasks was withdrawn on 5 September.</p>
+</section>
+
+<!-- ============ 7 STUDY 5 ============ -->
+<section id="s5">
+<h2 class="sec"><span class="n">7</span>Study 5: Online adaptation in a stochastic environment</h2>
+<h3><span class="n">7.1</span>Question and motivation</h3>
+<p>Test-time adaptation treats each observed transition as evidence about how the environment behaves. In a deterministic environment that is reasonable. In a stochastic one, a single transition is one random draw from a distribution of possible outcomes. An update that fits that particular outcome may move the model away from the true distribution.</p>
+<div class="question"><p>When the environment is random but unchanged between training and deployment, does online adaptation improve control, or does fitting individual random outcomes damage the model's estimate of the transition probabilities?</p></div>
+
+<h3><span class="n">7.2</span>Setup</h3>
+<p><strong>Environment.</strong> The standard 8×8 slippery FrozenLake (64 states, 4 actions, at most 100 steps per episode). Training and evaluation use the same environment, so any benefit of adaptation cannot come from correcting a shift.</p>
+<p><strong>Model.</strong> A compact transformer world model (embedding width 64, three blocks, four attention heads) received the state and action as one-hot tokens. It was trained with two equally weighted objectives: the usual JEPA latent prediction loss, and a cross-entropy loss for a head that outputs a probability for each of the 64 possible next states. The model therefore estimates the full transition distribution. Training data comprised 24,771 transitions from 2,048 episodes with random starts and random actions, split 90/10 by episode.</p>
+<p><strong>Planner.</strong> At each step, the model's predicted probabilities for all state–action pairs form a transition matrix. Finite-horizon dynamic programming over that matrix selects the action with the highest predicted probability of reaching the goal within the remaining steps.</p>
+<p><strong>Arms.</strong> <em>No adaptation</em> uses the trained model throughout. <em>Adapter-only adaptation</em> updates only small adapter modules inserted in the predictor, initialised to the identity. <em>Full adaptation</em> updates the predictor and the next-state head. Both adaptive arms take one Adam step after each transition on the five most recent transitions, minimising next-state cross-entropy, and reset at each episode. All arms used the same ten evaluation seeds.</p>
+<p><strong>Measurements.</strong> Besides success, we measured the quality of the predicted distributions: negative log-likelihood, Brier score, calibration error and, most directly, the <em class="term">total variation distance</em> between the model's predicted transition probabilities and the true probabilities known from the environment's specification (0 for a perfect model).</p>
+
+<h3><span class="n">7.3</span>Results</h3>
+<figure id="fig10">
+  <div class="fig-head"><b>Figure 10.</b> Left: fraction of 10 paired episodes that reached the goal. Right: mean total variation distance between the model's transition probabilities and the true probabilities, measured on 1,024 held-out transitions after each episode (lower is better).</div>
+  <div class="chart-host" data-fig="f10"></div>
+  <figcaption>Full adaptation reduced success from 7 of 10 to 1 of 10 and moved the model substantially further from the true transition probabilities. Adapter-only adaptation changed the model very little.</figcaption>
+</figure>
+<p>Relative to no adaptation, full adaptation changed success by −0.60 per episode (95% interval −1.00 to −0.20), a clear harm. Adapter-only adaptation changed it by +0.10 (interval −0.20 to +0.40), which is inconclusive with ten episodes.</p>
+<div class="tablewrap">
+<table>
+<caption><b>Table 7.</b> Quality of the predicted next-state distributions during interaction. Lower is better for negative log-likelihood (NLL), Brier score and expected calibration error (ECE); higher is better for top-1 accuracy.</caption>
+<thead><tr><th>Arm</th><th class="num">NLL</th><th class="num">Brier</th><th class="num">Top-1 accuracy</th><th class="num">ECE</th><th class="num">Held-out total variation</th></tr></thead>
+<tbody>
+<tr><td>No adaptation</td><td class="num">1.131</td><td class="num">0.662</td><td class="num">37.3%</td><td class="num">0.112</td><td class="num">0.302</td></tr>
+<tr><td>Adapter-only adaptation</td><td class="num">1.159</td><td class="num">0.674</td><td class="num">36.0%</td><td class="num">0.133</td><td class="num">0.308</td></tr>
+<tr class="hl"><td>Full adaptation</td><td class="num">1.767</td><td class="num">0.876</td><td class="num">32.4%</td><td class="num">0.285</td><td class="num">0.552</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3><span class="n">7.4</span>Interpretation</h3>
+<p>Unrestricted online updates were harmful in this stochastic setting. A full update reduces the loss on the most recent transitions while moving the model away from the population transition probabilities, which is consistent with overfitting individual random outcomes. The held-out measurements confirm that the damage is to the model itself, not merely an isolated planning error. Restricting updates to small adapters avoided most of the damage but did not produce a demonstrable improvement.</p>
+<p>The study does not determine whether the probabilistic formulation itself is advantageous, because it contains no deterministic counterpart. The natural follow-up is a planner that uses only the most likely next state, and a model retrained with a deterministic head under otherwise identical conditions. The sample of ten episodes per arm is small, and the tabular environment is simple; the result should be read as a demonstration of a failure mode rather than an estimate of its size in richer settings.</p>
+</section>
+
+<!-- ============ 8 STUDY 6 ============ -->
+<section id="s6">
+<h2 class="sec"><span class="n">8</span>Study 6: Early exit of unpromising candidates in CEM</h2>
+<h3><span class="n">8.1</span>Question and motivation</h3>
+<p>In each CEM iteration used here, 200 candidate action sequences of 25 steps are fully simulated in the world model and only the best 30 (the elites) are used to update the sampler. If a candidate is clearly poor after its first few simulated steps, the remaining steps are wasted computation. Stopping such candidates early could reduce planning cost, provided it does not change which candidates become elites, since a different elite set is a different planner rather than a cheaper implementation of the same one.</p>
+<div class="question"><p>Can candidates that already look poor after a partial prediction be stopped early, saving a material fraction of model computation, without changing the planner's elite set or its chosen action?</p></div>
+
+<h3><span class="n">8.2</span>Setup</h3>
+<p>The criterion for success was set in advance: savings of roughly 10% or more of model prediction steps, together with perfect preservation of the planner's decisions on held-out data (identical elite sets, identical sampler update and first action up to numerical rounding). Two mechanisms were tested.</p>
+<p><strong>Loss-threshold gate.</strong> For each CEM iteration and prefix length, the threshold was the largest prefix cost of any final elite in calibration data. During planning, candidates whose prefix cost exceeded this threshold were stopped, unless fewer than 30 candidates would remain. The gate was evaluated in a paired 2×2 design crossing no adaptation or full test-time adaptation with ordinary or early-exit CEM, on all three dynamics conditions, with calibration seeds 100–102 and held-out seeds 200–202 (50 paired episodes per seed, condition and arm).</p>
+<p><strong>Prefix-rank replay.</strong> A stricter, inexpensive screen replayed already-recorded planning traces offline. At each iteration and prefix length, only candidates within a calibrated rank budget were retained. Calibration used 6.08 million predictor steps (seed 100), and the held-out audit used 5.36 million (seed 200). No new environment interaction was required.</p>
+
+<h3><span class="n">8.3</span>Results</h3>
+<p>The loss-threshold gate saved 0.060% of predictor steps without adaptation and 0.043% with adaptation, while its bookkeeping increased measured planning time. Candidate and elite agreement with ordinary CEM was 96.7% and about 84.3%, respectively, so it did not preserve decisions exactly. The prefix-rank replay saved 0.83% of predictor steps on held-out data and still failed the exactness requirement: in 11 of 5,360 held-out batches, at least one original elite was discarded.</p>
+<figure id="fig11">
+  <div class="fig-head"><b>Figure 11.</b> The trade-off between computation saved and exact preservation of the elite set, for fixed prefix-rank budgets (number of candidates retained at each prefix, out of 200) and for the calibrated gate on held-out data.</div>
+  <div class="chart-host" data-fig="f11"></div>
+  <figcaption>The frontier has no useful middle: any saving large enough to matter changes the elite set in most planning steps.</figcaption>
+</figure>
+<p>Prefix cost is therefore not a safe early-exit signal for this planner. The result is specific to prefix-based early exit; it does not show that CEM has no other form of redundant computation.</p>
+
+<h4>An incidental adaptation result</h4>
+<p>The 2×2 design also compared full test-time adaptation with no adaptation under ordinary CEM. In the low-density condition, adaptation raised success from 78.7% to 86.7%, a paired difference of +8.0 percentage points (95% interval 3.3 to 12.7). The canonical and high-damping differences were inconclusive (Figure 12). This is the only clearly positive adaptation result in the programme. It was obtained with a different model (AdaJEPA) and a broader set of adapted parameters than Study 1, in a study designed for a different question, and it has not been replicated.</p>
+<figure id="fig12">
+  <div class="fig-head"><b>Figure 12.</b> Change in success rate from full test-time adaptation relative to no adaptation, under ordinary CEM on held-out seeds. Bars are 95% paired bootstrap intervals.</div>
+  <div class="chart-host" data-fig="f12"></div>
+  <figcaption>Adaptation added roughly 0.13 to 0.18 seconds of logged update time, so its benefit is not free in latency.</figcaption>
+</figure>
+</section>
+
+<!-- ============ 9 STUDY 7 ============ -->
+<section id="s7">
+<h2 class="sec"><span class="n">9</span>Study 7: Learned model-predictive control versus PPO in turbulent flow</h2>
+<h3><span class="n">9.1</span>Question and motivation</h3>
+<p>Scientific control problems, such as reducing turbulence in a flow, are a natural application for planning with a learned model: each real simulation is expensive, and the physics may change between operating conditions. The relevant comparison is with <em class="term">proximal policy optimisation</em> (PPO), a widely used model-free reinforcement learning method that learns a policy directly from interaction, without a model or online search. The comparison is fair only if both methods receive the same number of real interactions.</p>
+<div class="question"><p>With an equal budget of real environment interaction, does planning with a learned model control turbulent flow better than a directly trained PPO policy, and does its advantage grow when the flow regime shifts to a higher Reynolds number?</p></div>
+
+<h3><span class="n">9.2</span>Setup</h3>
+<p><strong>Environment.</strong> Two-dimensional Kolmogorov flow at Reynolds number 200, observed through a 64-dimensional summary of the flow field, with four continuous forcing controls bounded to a numerically stable range. The reward trades turbulent kinetic energy against control effort.</p>
+<p><strong>Learned-model planner.</strong> A one-step world model predicts the next observation, the reward and episode termination. It was trained on 1,000 rollouts of 25 steps, that is, 25,000 real interactions. At each step, CEM (256 candidates, 32 elites, 4 iterations, horizon 8, discount 0.99) maximises predicted discounted reward. Test-time adaptation was available but not used in this comparison.</p>
+<p><strong>PPO.</strong> A PPO agent was trained on exactly 25,000 real environment steps; the implementation counted every call to the simulator, so the budgets match exactly.</p>
+<p><strong>Evaluation.</strong> Both controllers started from the same bank of 20 stored flow states, each produced by a common burn-in period, and ran for 25 steps. One start produced non-finite values and was excluded, leaving 19 pairs. The time between control actions was the same for both methods.</p>
+
+<h3><span class="n">9.3</span>Results</h3>
+<figure id="fig13">
+  <div class="fig-head"><b>Figure 13.</b> Return difference (learned MPC minus PPO) from each of the 19 paired starting states, sorted. The shaded band is the 95% interval for the mean difference; the vertical line marks the mean.</div>
+  <div class="legend" data-legend="f13"></div>
+  <div class="chart-host" data-fig="f13"></div>
+  <figcaption>The spread across starts (standard deviation 3.81) is about nine times the mean difference.</figcaption>
+</figure>
+<p>At Reynolds number 200, the two methods were statistically indistinguishable in return. The mean difference (MPC minus PPO) was −0.42, with a 95% interval of −2.26 to 1.42, and the planner obtained the higher return on 8 of the 19 starts. It also required about thirteen times more computation per decision on every start (0.120 s against 0.009 s). The planner's actions were consistently gentler (lower action magnitude on all 19 starts), a real behavioural difference that did not translate into return. The world model's normalised prediction error of 0.690 indicates that it captured some structure of the flow but remained weak, which is the most likely reason that planning through it did not pay.</p>
+<p>The transfer evaluation at Reynolds number 400, the comparison for which the study was designed, could not be run. Building the bank of starting states failed because the simulation diverged numerically during burn-in at the higher Reynolds number under the chosen control bounds, in all 16 deterministic attempts.</p>
+
+<h3><span class="n">9.4</span>Interpretation</h3>
+<p>The result is narrow. In distribution, at matched interaction, planning through a learned model of this quality offers no benefit over a directly trained policy and costs an order of magnitude more per decision. The hypothesis that planning helps when the dynamics shift remains untested rather than refuted. The matched-interaction protocol with a shared bank of starting states is reusable regardless of whether the transfer comparison is eventually run.</p>
+</section>
+
+<!-- ============ 10 DISCUSSION ============ -->
+<section id="discussion">
+<h2 class="sec"><span class="n">10</span>General discussion</h2>
+
+<h3><span class="n">10.1</span>Summary of the evidence</h3>
+<p>None of the four proposed methods (planning-aware adaptation, multi-hypothesis planning, signal-gated search and prefix-based early exit) showed a reliable benefit under its pre-specified criterion. Unrestricted adaptation was harmful in a stochastic environment. The fluid-control comparison was null in distribution and its transfer test could not be run. No line is currently ready to support a method paper. These conclusions follow from decision rules that were specified before the relevant data were collected, and in one case they caused an approved publication plan to be withdrawn within a day.</p>
+<p>The programme nevertheless produced findings that constrain future work, and measurement tools that make those findings visible.</p>
+
+<h3><span class="n">10.2</span>Findings that extend beyond individual studies</h3>
+<p><strong>1. Prediction quality is not decision quality.</strong> A world model used for control is consumed as a ranker of candidate actions, not as a predictor. In Study 1, prediction error improved on every update while ranking barely moved, and under shift the model's top-ranked candidates overlapped the truly best ones at or below chance. A method evaluated only on prediction error, or only on success rate, could not have detected this. Any future adaptation or training objective should be evaluated, and preferably defined, in terms of ranking, regret or realised decision value.</p>
+<p><strong>2. Proxy labels can reverse a conclusion.</strong> The same TD-MPC2 episodes, described by whether search changed the action and by whether it changed the return, disagreed on every headline quantity: 83–95% of steps "mattered" against 4.5–5.0%; a concentration of 0.45 against 0.96; and the signal selected under the proxy ranked worse than chance under the real label. Validating a proxy against the quantity of interest is cheaper than being misled by it.</p>
+<p><strong>3. Calibration on logged data does not transfer to closed loop.</strong> A gate threshold that selected 10% of states in logged episodes selected 42–53% once it was acting, because acting differently changes the states visited. The project notes record a second instance, in which a 50% skipping target realised at 61–67%. Operating points for any adaptive mechanism must be fitted in closed loop.</p>
+<p><strong>4. Dispersed beliefs are not diverse hypotheses.</strong> In Study 2, belief entropy remained near its maximum while the hypotheses were functionally identical. Diversity must be measured in prediction space, and ensembles of learned hypotheses should be trained with a strictly proper score if their diversity is to be meaningful.</p>
+<p><strong>5. The value of extra planning is sparse only where it is least needed.</strong> For near-saturated agents, the few states where search matters are easy to find; where planning carries the policy, its value is spread across the episode and no tested inexpensive signal localises it.</p>
+
+<h3><span class="n">10.3</span>Reusable measurement tools</h3>
+<ul>
+  <li><strong>Simulator-replay candidate ranking</strong>: replaying every planner candidate in the simulator to score the model's ordering (rank correlation, top-1 regret, top-<i>k</i> overlap) before and after each model update.</li>
+  <li><strong>The counterfactual search probe</strong>: exact save and restore of simulator and planner state, enabling branching interventions on a live episode.</li>
+  <li><strong>Ensemble dispersion diagnostics</strong>: spread–skill ratio, truth-in-hull, rank histograms and a random-hypothesis control that distinguishes a collapsed generator from a conditioning path that transmits nothing.</li>
+  <li><strong>The matched-interaction start-bank protocol</strong> for comparing planning and model-free controllers from identical initial states.</li>
+</ul>
+
+<h3><span class="n">10.4</span>Open questions and candidate next steps</h3>
+<p>The following follow-ups were identified in the course of the studies. They are recorded here as options, not as decisions.</p>
+<ul>
+  <li><strong>Close the adaptation question.</strong> Repeat Study 1 with five gradient steps per replanning and with adaptation of the encoder's final block. If ranking still does not respond, the conclusion that the update is misdirected becomes firm.</li>
+  <li><strong>Target decision quality directly.</strong> Train or adapt world models with objectives defined on candidate ranking, regret or realised decision value rather than on prediction error alone.</li>
+  <li><strong>Recalibrate the multi-hypothesis belief.</strong> Re-run the nested comparison of Study 2 at a less confident likelihood (variance 1.0), and train the energy-score generator from scratch.</li>
+  <li><strong>Separate probabilistic modelling from planning.</strong> Add a deterministic ablation to the FrozenLake study, or use a benchmark with a known outcome distribution.</li>
+  <li><strong>Measure the value of search over longer horizons.</strong> Compare several search depths with a longer or recursive continuation, which avoids the sign errors of the myopic label.</li>
+  <li><strong>Make the fluid-control transfer test runnable.</strong> Stabilise the Reynolds-number-400 burn-in, or substitute a milder shift, before investing further in that line.</li>
+</ul>
+
+<h3><span class="n">10.5</span>Limitations of the programme as a whole</h3>
+<p>Most learned components were trained once, so the reported intervals capture variation across evaluation episodes but not across training runs. Several studies used a single environment and a single model per question, and some sample sizes were small (ten episodes per arm in Studies 3, 4 and 5). The negative results are therefore specific to the configurations tested; each section states the configuration to which its conclusion applies.</p>
+</section>
+
+<section id="conclusion">
+<h2 class="sec"><span class="n">11</span>Conclusion</h2>
+<p>These studies asked whether a planning agent with a learned world model can be made more robust to change, more careful under uncertainty, and more economical with computation. Under the criteria set in advance, the methods tested did not deliver these improvements. The studies did identify why, in terms that generalise: the planner consumes rankings rather than predictions, the value of planning must be measured rather than inferred from action changes, and thresholds and beliefs must be calibrated under the conditions in which they will act. Any continuation of the project should begin from these constraints and should select at most one of the focused follow-ups in Section 10.4.</p>
+</section>
+
+<!-- ============ APPENDICES ============ -->
+<section id="appA">
+<h2 class="sec"><span class="n">A</span>Appendix A: Infrastructure validation study</h2>
+<p>One further experiment tested computing infrastructure rather than a scientific hypothesis. A small network (a three-layer perceptron) was trained to predict the next PointMaze state from the current state and action, using the released PointMaze trajectories with training and validation episodes kept strictly separate. The purpose was to verify, on real data and at negligible cost, a distributed training system: synchronous training across several GPUs, a single process responsible for writing checkpoints and metrics, automatic resumption from the latest checkpoint after interruption, and scheduling of work onto GPUs with spare memory. All of these functions worked as intended, and the system is retained as shared infrastructure.</p>
+</section>
+
+<section id="appB">
+<h2 class="sec"><span class="n">B</span>Appendix B: Glossary</h2>
+<dl class="gloss">
+  <dt>AUROC</dt><dd>Area under the receiver operating characteristic curve. The probability that a randomly chosen positive case receives a higher score than a randomly chosen negative case; 0.5 is chance and 1.0 is perfect.</dd>
+  <dt>Bootstrap interval</dt><dd>A confidence interval obtained by repeatedly resampling the observed data with replacement and recording the spread of the recomputed estimate.</dd>
+  <dt>CEM</dt><dd>Cross-entropy method. A search procedure that samples candidates from a distribution, keeps the best (the elites), refits the distribution to them, and repeats.</dd>
+  <dt>Counterfactual value of search</dt><dd>The difference in realised return between two otherwise identical futures that differ only in how much search chose the first action.</dd>
+  <dt>Distribution shift</dt><dd>A difference between the conditions at deployment and those represented in the training data.</dd>
+  <dt>Effective number of candidates</dt><dd>The exponential of the entropy of the belief weights; 1 when all weight is on one hypothesis and <i>K</i> when weight is uniform over <i>K</i>.</dd>
+  <dt>Elite</dt><dd>One of the best-scoring candidates in a CEM iteration, used to update the sampling distribution.</dd>
+  <dt>Energy score</dt><dd>A strictly proper scoring rule for ensemble forecasts that rewards accuracy of members and penalises their mutual similarity.</dd>
+  <dt>Episode</dt><dd>One complete attempt at a task, from initial state to success, failure or time limit.</dd>
+  <dt>Headroom</dt><dd>In Study 4, the fraction of the gain from policy-only to full search that is contributed by search iterations beyond the first.</dd>
+  <dt>JEPA</dt><dd>Joint-Embedding Predictive Architecture. A model trained to predict the latent representation of future observations rather than their raw content.</dd>
+  <dt>Latent state</dt><dd>A compact vector representation of an observation produced by an encoder network.</dd>
+  <dt>Lorenz top-20% share</dt><dd>The fraction of a total quantity contained in the 20% of cases where it is largest; 0.2 for a uniform distribution and 1.0 for complete concentration.</dd>
+  <dt>MPC</dt><dd>Model-predictive control. Planning a sequence of actions with a model, executing the first, and replanning from the observed result.</dd>
+  <dt>MPPI</dt><dd>Model predictive path integral control. A sampling-based planner that refits its sampling distribution using all candidates, weighted by their scores.</dd>
+  <dt>Paired comparison</dt><dd>A comparison in which each method is evaluated on the same episodes, so that differences are computed episode by episode.</dd>
+  <dt>Policy prior</dt><dd>In TD-MPC2, the learned network that proposes an action directly, without search.</dd>
+  <dt>PPO</dt><dd>Proximal policy optimisation. A model-free reinforcement learning algorithm that learns a policy directly from interaction.</dd>
+  <dt>Pre-registration</dt><dd>Fixing the analysis plan and decision rule in writing before the data that will test them are collected.</dd>
+  <dt>Return</dt><dd>The sum of rewards obtained over an episode, or, when discounted, a weighted sum in which later rewards count less.</dd>
+  <dt>Reynolds number</dt><dd>A dimensionless quantity that characterises how turbulent a flow is; higher values indicate more turbulent flow.</dd>
+  <dt>Spearman correlation</dt><dd>The correlation between the ranks of two sets of values; it measures agreement in ordering.</dd>
+  <dt>Spread–skill ratio</dt><dd>The ratio of an ensemble's internal spread to the error of its mean forecast; approximately 1 for a calibrated ensemble.</dd>
+  <dt>Strictly proper scoring rule</dt><dd>A measure of forecast quality whose expected value is optimised only when the forecast distribution equals the true distribution.</dd>
+  <dt>Test-time adaptation</dt><dd>Updating a model's parameters during deployment using the error between its predictions and observed outcomes.</dd>
+  <dt>Top-<i>k</i> overlap</dt><dd>The fraction of the <i>k</i> candidates ranked best by the model that are also among the <i>k</i> truly best.</dd>
+  <dt>Total variation distance</dt><dd>A distance between two probability distributions: the largest difference in probability they assign to any event. Zero for identical distributions.</dd>
+  <dt>Truth in hull</dt><dd>The fraction of cases in which the observed outcome lies within the range spanned by the ensemble members.</dd>
+  <dt>World model</dt><dd>A learned function that predicts how an environment's state evolves in response to actions.</dd>
+</dl>
+</section>
+
+<section id="appC">
+<h2 class="sec"><span class="n">C</span>Appendix C: Sources</h2>
+<p>Every number in this record is taken from the project's experiment records or recomputed from their stored per-episode data. The principal sources are listed below; paths are relative to the project repository.</p>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Study</th><th>Source documents</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>docs/experiments/planning_aware_tta/report.md</code>, <code>spec.md</code>, <code>implementation_notes.md</code></td></tr>
+<tr><td>2</td><td><code>docs/experiments/adajepa_xm/report.md</code>, <code>iclr_greenlight_probe.md</code>, <code>spec.md</code></td></tr>
+<tr><td>3</td><td><code>docs/experiments/tdmpc2_search_signal/report.md</code>, <code>spec.md</code></td></tr>
+<tr><td>4</td><td><code>docs/experiments/tdmpc2_search_signal/study.md</code>, <code>prereg.md</code>, <code>generalization_result.md</code></td></tr>
+<tr><td>5</td><td><code>docs/experiments/adajepa_flex/frozenlake_report.md</code></td></tr>
+<tr><td>6</td><td><code>docs/experiments/adajepa_flex/mpc_compute_archive.md</code></td></tr>
+<tr><td>7</td><td><code>docs/experiments/hydrogym_ppo/README.md</code>; project notes, “Experimental Summaries &amp; Results”</td></tr>
+<tr><td>A</td><td><code>docs/experiments/pointmaze_latent_predictor/README.md</code>, <code>docs/ray.md</code></td></tr>
+<tr><td>All</td><td>Project status update of 11 September 2026; project overview notes</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Confidence intervals in Figures 2, 3 and 4 and the interval in Figure 13 were recomputed from the stored per-episode results (paired percentile bootstrap, 20,000 resamples, for Figure 4; a <i>t</i> interval over the 19 finite pairs for Figure 13). All other intervals are as reported in the source documents.</p>
+</section>
+
+</main>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent){ const e = document.createElementNS(NS, tag); for (const k in attrs){ if (attrs[k] != null) e.setAttribute(k, attrs[k]); } if (parent) parent.appendChild(e); return e; }
+  function txt(parent, x, y, s, cls, anchor){ const t = el('text', {x, y, class: cls, 'text-anchor': anchor || 'start'}, parent); t.textContent = s; return t; }
+  const pct = v => Math.round(v * 100) + '%';
+  const pct1 = v => (v * 100).toFixed(1) + '%';
+  const f3 = v => v.toFixed(3);
+  const f2 = v => v.toFixed(2);
+  const pp = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+
+  const tip = document.getElementById('tip');
+  function showTip(evt, html){ tip.innerHTML = html; tip.hidden = false; moveTip(evt); }
+  function moveTip(evt){
+    let x, y;
+    if (evt.clientX != null && evt.type.startsWith('pointer')) { x = evt.clientX; y = evt.clientY; }
+    else { const r = evt.target.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top; }
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let left = x + 14, top = y - h - 10;
+    if (left + w > window.innerWidth - 8) left = x - w - 14;
+    if (top < 8) top = y + 16;
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  }
+  function hideTip(){ tip.hidden = true; }
+  function bindHit(node, html){
+    node.addEventListener('pointerenter', e => showTip(e, html));
+    node.addEventListener('pointermove', moveTip);
+    node.addEventListener('pointerleave', hideTip);
+    node.addEventListener('focus', e => showTip(e, html));
+    node.addEventListener('blur', hideTip);
+  }
+
+  function mkScale(ax, a, b){
+    if (ax.log){ const l0 = Math.log10(ax.min), l1 = Math.log10(ax.max); return v => a + (Math.log10(Math.max(v, ax.min)) - l0) / (l1 - l0) * (b - a); }
+    return v => a + (v - ax.min) / (ax.max - ax.min) * (b - a);
+  }
+
+  /* ---------- dot-row chart ---------- */
+  function renderDots(host, spec){
+    host.innerHTML = '';
+    const W = Math.max(280, host.clientWidth);
+    const narrow = W < 460;
+    const labelW = Math.min(spec.labelW || 170, narrow ? W * 0.40 : W * 0.38);
+    const padR = spec.valueLabels ? 54 : 16;
+    const series = spec.series;
+    const nS = series.length;
+    const dodge = nS > 1 ? 11 : 0;
+    const rowH = spec.rowH || (nS > 1 ? 14 + nS * 11 : 30);
+    const top = spec.topPad != null ? spec.topPad : (spec.refLabel || spec.meanLabel ? 22 : 8);
+    const plotH = spec.rows.length * rowH;
+    const H = top + plotH + 24 + (spec.x.label ? 18 : 0);
+    const svg = el('svg', {width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': spec.aria || ''}, host);
+    const x0 = labelW + 12, x1 = W - padR;
+    const sx = mkScale(spec.x, x0, x1);
+    const yb = top + plotH;
+    if (spec.band){ el('rect', {x: sx(spec.band[0]), y: top - 4, width: sx(spec.band[1]) - sx(spec.band[0]), height: plotH + 4, class: 'band'}, svg); }
+    spec.x.ticks.forEach(t => {
+      const x = sx(t);
+      el('line', {x1: x, x2: x, y1: top - 2, y2: yb, class: 'grid'}, svg);
+      txt(svg, x, yb + 15, spec.x.fmt ? spec.x.fmt(t) : String(t), 'tick', 'middle');
+    });
+    el('line', {x1: x0, x2: x1, y1: yb, y2: yb, class: 'axis'}, svg);
+    if (spec.x.label) txt(svg, (x0 + x1) / 2, yb + 33, spec.x.label, 'axlabel', 'middle');
+    if (spec.ref != null){
+      const x = sx(spec.ref);
+      el('line', {x1: x, x2: x, y1: top - 6, y2: yb, class: 'ref'}, svg);
+      if (spec.refLabel){
+        const anchor = spec.refAnchor || (x > (x0 + x1) / 2 ? 'end' : 'start');
+        txt(svg, anchor === 'end' ? x - 4 : anchor === 'middle' ? x : x + 4, top - 10, spec.refLabel, 'reflabel', anchor);
+      }
+    }
+    if (spec.mean != null){
+      const x = sx(spec.mean);
+      el('line', {x1: x, x2: x, y1: top - 6, y2: yb, class: 'ref'}, svg);
+      if (spec.meanLabel) txt(svg, x - 4, top - 10, spec.meanLabel, 'reflabel', 'end');
+    }
+    spec.rows.forEach((r, i) => {
+      const cy0 = top + i * rowH + rowH / 2;
+      txt(svg, labelW, cy0 + 4, r, 'rowlabel', 'end');
+      series.forEach((s, j) => {
+        const raw = s.values[i];
+        const cy = cy0 + (j - (nS - 1) / 2) * dodge;
+        if (raw == null){
+          if (s.missing && s.missing[i]) txt(svg, x0 + 4, cy + 4, s.missing[i], 'note');
+          return;
+        }
+        const d = typeof raw === 'number' ? {v: raw} : raw;
+        const color = (spec.rowColors && spec.rowColors[i]) || (d.c) || s.color;
+        const cx = sx(d.v);
+        if (spec.stems){ const b = sx(spec.stemBase != null ? spec.stemBase : spec.x.min); el('line', {x1: b, x2: cx, y1: cy, y2: cy, class: 'stem', style: `stroke:var(${color})`}, svg); }
+        if (d.lo != null){
+          el('line', {x1: sx(d.lo), x2: sx(d.hi), y1: cy, y2: cy, class: 'ci', style: `stroke:var(${color})`}, svg);
+        }
+        el('circle', {cx, cy, r: 5, class: 'dot', style: `fill:var(${color})`}, svg);
+        if (spec.valueLabels){
+          const right = d.hi != null ? Math.max(sx(d.hi), cx) : cx;
+          txt(svg, right + 9, cy + 4, (spec.vfmt || spec.x.fmt || String)(d.v), 'vlabel');
+        }
+        const fmt = spec.tfmt || spec.vfmt || spec.x.fmt || String;
+        let html = `<b>${r}</b>` + (nS > 1 ? `<br><span class="m">${s.name}</span>` : '') + `<br>${spec.metric || 'Value'}: <b>${fmt(d.v)}</b>`;
+        if (d.lo != null) html += `<br><span class="m">95% interval ${fmt(d.lo)} to ${fmt(d.hi)}</span>`;
+        if (d.note) html += `<br><span class="m">${d.note}</span>`;
+        const hit = el('circle', {cx, cy, r: 12, class: 'hit', tabindex: 0, 'aria-label': `${r}${nS > 1 ? ', ' + s.name : ''}: ${fmt(d.v)}`}, svg);
+        bindHit(hit, html);
+      });
+    });
+  }
+
+  /* ---------- xy frontier chart ---------- */
+  function renderXY(host, spec){
+    host.innerHTML = '';
+    const W = Math.max(280, host.clientWidth);
+    const H = Math.round(Math.min(360, Math.max(250, W * 0.5)));
+    const m = {l: 52, r: 20, t: 22, b: 46};
+    const svg = el('svg', {width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': spec.aria}, host);
+    const sx = mkScale(spec.x, m.l, W - m.r), sy = mkScale(spec.y, H - m.b, m.t);
+    spec.y.ticks.forEach(t => { const y = sy(t); el('line', {x1: m.l, x2: W - m.r, y1: y, y2: y, class: 'grid'}, svg); txt(svg, m.l - 8, y + 4, spec.y.fmt(t), 'tick', 'end'); });
+    spec.x.ticks.forEach(t => { const x = sx(t); txt(svg, x, H - m.b + 16, spec.x.fmt(t), 'tick', 'middle'); });
+    el('line', {x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, class: 'axis'}, svg);
+    txt(svg, (m.l + W - m.r) / 2, H - 8, spec.x.label, 'axlabel', 'middle');
+    const yl = txt(svg, 14, (m.t + H - m.b) / 2, spec.y.label, 'axlabel', 'middle');
+    yl.setAttribute('transform', `rotate(-90 14 ${(m.t + H - m.b) / 2})`);
+    const pts = spec.points.map(p => [sx(p.x), sy(p.y)]);
+    el('polyline', {points: pts.map(p => p.join(',')).join(' '), style: 'fill:none;stroke:var(--s1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round'}, svg);
+    const all = spec.points.map(p => Object.assign({color: '--s1'}, p)).concat((spec.extra || []).map(p => Object.assign({color: '--s2'}, p)));
+    all.forEach(p => {
+      const cx = sx(p.x), cy = sy(p.y);
+      el('circle', {cx, cy, r: 5, class: 'dot', style: `fill:var(${p.color})`}, svg);
+      if (p.label){
+        const dx = p.dx != null ? p.dx : 10, dy = p.dy != null ? p.dy : -8;
+        txt(svg, cx + dx, cy + dy, p.label, 'vlabel', p.anchor || 'start');
+      }
+      const hit = el('circle', {cx, cy, r: 12, class: 'hit', tabindex: 0, 'aria-label': `${p.name}: ${spec.x.tfmt(p.x)} saved, ${spec.y.tfmt(p.y)} exact`}, svg);
+      bindHit(hit, `<b>${p.name}</b><br>Predictor steps saved: <b>${spec.x.tfmt(p.x)}</b><br>Batches with exact elite set: <b>${spec.y.tfmt(p.y)}</b>`);
+    });
+  }
+
+  /* ---------- data table ---------- */
+  function tableFor(spec){
+    const wrap = document.createElement('div'); wrap.className = 'tablewrap';
+    const t = document.createElement('table');
+    const fmt = spec.tfmt || spec.vfmt || (spec.x && spec.x.fmt) || String;
+    let h = '<thead><tr><th>' + (spec.rowHead || 'Row') + '</th>';
+    spec.series.forEach(s => { h += `<th class="num">${spec.series.length > 1 ? s.name : (spec.metric || 'Value')}</th>`; if (spec.series.some(ss => ss.values.some(v => v && v.lo != null))) h += `<th class="num">95% interval</th>`; });
+    h += '</tr></thead><tbody>';
+    spec.rows.forEach((r, i) => {
+      h += `<tr><td>${r}</td>`;
+      spec.series.forEach(s => {
+        const raw = s.values[i];
+        const hasCI = spec.series.some(ss => ss.values.some(v => v && v.lo != null));
+        if (raw == null){ h += `<td class="num">${(s.missing && s.missing[i]) || '—'}</td>` + (hasCI ? '<td class="num">—</td>' : ''); return; }
+        const d = typeof raw === 'number' ? {v: raw} : raw;
+        h += `<td class="num">${fmt(d.v)}</td>`;
+        if (hasCI) h += `<td class="num">${d.lo != null ? fmt(d.lo) + ' to ' + fmt(d.hi) : '—'}</td>`;
+      });
+      h += '</tr>';
+    });
+    t.innerHTML = h + '</tbody>';
+    wrap.appendChild(t); return wrap;
+  }
+  function tableXY(spec){
+    const wrap = document.createElement('div'); wrap.className = 'tablewrap';
+    const t = document.createElement('table');
+    let h = '<thead><tr><th>Setting</th><th class="num">Predictor steps saved</th><th class="num">Batches with exact elite set</th></tr></thead><tbody>';
+    spec.points.concat(spec.extra || []).forEach(p => { h += `<tr><td>${p.name}</td><td class="num">${spec.x.tfmt(p.x)}</td><td class="num">${spec.y.tfmt(p.y)}</td></tr>`; });
+    t.innerHTML = h + '</tbody>'; wrap.appendChild(t); return wrap;
+  }
+
+  /* ---------- figure specifications ---------- */
+  const COND = ['Default', 'Damping ×5', 'Damping ×10', 'Damping ×20', 'Mass ×0.4', 'Mass ×0.2'];
+  const ci = (v, lo, hi) => ({v, lo, hi});
+  const ARMS = ['Policy only', 'One search iteration', 'Full search (6 iterations)', 'Signal-gated search', 'Random skipping, matched rate'];
+  const ARM_COLORS = ['--s0', '--s0', '--s0', '--s2', '--s1'];
+  const pm = (v, h) => ({v, lo: v - h, hi: v + h});
+  const retAxis = {min: 0, max: 1000, ticks: [0, 250, 500, 750, 1000], fmt: v => v.toLocaleString('en-GB')};
+
+  const FIGS = {
+    f2: {panels: [{
+      rows: COND, rowHead: 'Condition', metric: 'Success rate', labelW: 120,
+      x: {min: 0, max: 1, ticks: [0, .25, .5, .75, 1], fmt: pct, label: 'Success rate'},
+      tfmt: pct1,
+      series: [
+        {name: 'No adaptation', color: '--s0', values: [ci(.867,.758,.931), ci(.883,.778,.942), ci(.867,.758,.931), ci(.667,.541,.773), ci(.533,.409,.654), ci(.217,.131,.336)]},
+        {name: 'Standard adaptation', color: '--s1', values: [ci(.883,.778,.942), ci(.883,.778,.942), ci(.867,.758,.931), ci(.600,.474,.714), ci(.417,.301,.543), ci(.183,.106,.299)]},
+        {name: 'Planning-sensitivity weighting', color: '--s2', values: [ci(.883,.778,.942), ci(.883,.778,.942), ci(.867,.758,.931), ci(.667,.541,.773), ci(.367,.256,.493), ci(.250,.158,.372)]}
+      ], legend: true
+    }]},
+    f3: {layout: 'side', panels: [
+      {title: 'Rank correlation (Spearman)', rows: COND, rowHead: 'Condition', metric: 'Spearman correlation', labelW: 96,
+       x: {min: 0, max: .6, ticks: [0, .2, .4, .6], fmt: v => v.toFixed(1)}, tfmt: f3,
+       series: [{name: 'Unadapted model', color: '--s1', values: [ci(.457,.418,.497), ci(.278,.241,.317), ci(.095,.059,.129), ci(.071,.044,.098), ci(.056,.024,.089), ci(.044,.014,.074)]}]},
+      {title: 'Top-10 overlap', rows: COND, rowHead: 'Condition', metric: 'Top-10 overlap', labelW: 96,
+       x: {min: 0, max: .35, ticks: [0, .1, .2, .3], fmt: v => v.toFixed(1)}, tfmt: f3,
+       ref: .15625, refLabel: 'chance 0.156', refAnchor: 'start',
+       series: [{name: 'Unadapted model', color: '--s1', values: [ci(.279,.252,.307), ci(.176,.151,.202), ci(.093,.077,.111), ci(.099,.082,.117), ci(.094,.078,.111), ci(.136,.119,.152)]}]}
+    ]},
+    f4: {panels: [{
+      rows: ['Canonical dynamics', 'Low density (×0.2)', 'High damping (×20)'], rowHead: 'Condition', metric: 'Success change (percentage points)', labelW: 150,
+      x: {min: -15, max: 15, ticks: [-15, -10, -5, 0, 5, 10, 15], fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v), label: 'Success change (percentage points)'},
+      tfmt: pp, ref: 0, refLabel: 'no difference', refAnchor: 'middle',
+      series: [
+        {name: 'Original generator (mixture objective)', color: '--s1', values: [ci(2.67,-5.33,10.67), ci(1.33,-5.33,8.0), ci(-2.67,-10.0,4.67)]},
+        {name: 'Generator retrained with energy score', color: '--s2', values: [ci(0.67,-8.0,9.33), ci(4.0,-3.33,11.33), ci(-3.33,-11.33,4.67)]}
+      ], legend: true
+    }]},
+    f5: {layout: 'side', legendFrom: 0, panels: [
+      {title: 'Spread–skill ratio', sub: 'Log scale; calibrated value 1', rows: ['Mixture (original)', 'Mean over candidates', 'Energy score', 'Random vectors'], rowHead: 'Objective', metric: 'Spread–skill ratio', labelW: 128,
+       x: {min: .003, max: 2, log: true, ticks: [.01, .1, 1], fmt: v => String(v)}, tfmt: v => v.toFixed(3),
+       ref: 1, refLabel: 'calibrated', refAnchor: 'end',
+       series: [
+         {name: 'Training-distribution worlds', color: '--s1', values: [.020, .009, 1.001, .238]},
+         {name: 'Held-out worlds', color: '--s2', values: [.010, .004, .486, null]}
+       ]},
+      {title: 'Truth in hull', sub: 'Calibrated value 66.7%', rows: ['Mixture (original)', 'Mean over candidates', 'Energy score', 'Random vectors'], rowHead: 'Objective', metric: 'Truth in hull', labelW: 128,
+       x: {min: 0, max: 100, ticks: [0, 25, 50, 75, 100], fmt: v => v + '%'}, tfmt: v => v.toFixed(1) + '%',
+       ref: 66.7, refLabel: 'calibrated', refAnchor: 'end',
+       series: [
+         {name: 'Training-distribution worlds', color: '--s1', values: [2.0, 0.9, 64.8, 22.5]},
+         {name: 'Held-out worlds', color: '--s2', values: [1.4, 0.7, 49.0, null]}
+       ]}
+    ]},
+    f6: {panels: [
+      {title: 'Walker (walk)', rows: ARMS, rowHead: 'Arm', metric: 'Return', rowColors: ARM_COLORS, labelW: 190, x: retAxis, valueLabels: true,
+       series: [{name: 'Return', color: '--s1', values: [ci(489,407,549), ci(931,917,944), ci(983,978,989), ci(960,937,979), ci(888,861,914)]}]},
+      {title: 'Quadruped (walk)', rows: ARMS, rowHead: 'Arm', metric: 'Return', rowColors: ARM_COLORS, labelW: 190, x: Object.assign({}, retAxis, {label: 'Episode return'}), valueLabels: true,
+       series: [{name: 'Return', color: '--s1', values: [ci(806,795,816), ci(865,839,890), ci(974,967,980), ci(970,963,977), ci(940,933,947)]}]}
+    ]},
+    f8: {panels: [
+      {title: 'Walker (walk)', rows: ARMS, rowHead: 'Arm', metric: 'Return', rowColors: ARM_COLORS, labelW: 190, x: retAxis, valueLabels: true,
+       series: [{name: 'Return', color: '--s1', values: [pm(489,77), pm(931,15), pm(983,6), pm(919,18), pm(911,30)]}]},
+      {title: 'Quadruped (walk)', rows: ARMS, rowHead: 'Arm', metric: 'Return', rowColors: ARM_COLORS, labelW: 190, x: retAxis, valueLabels: true,
+       series: [{name: 'Return', color: '--s1', values: [pm(806,12), pm(865,28), pm(974,7), pm(948,8), pm(927,5)]}]},
+      {title: 'Cheetah (run)', rows: ARMS, rowHead: 'Arm', metric: 'Return', rowColors: ARM_COLORS, labelW: 190, x: Object.assign({}, retAxis, {label: 'Episode return'}), valueLabels: true,
+       series: [{name: 'Return', color: '--s1', values: [pm(343,147), pm(545,103), pm(870,5), pm(660,102), pm(783,101)]}]}
+    ]},
+    f9: {layout: 'side', panels: [
+      {title: 'Median |Δ|', sub: 'Log scale', rows: ['Walker, seed 1', 'Walker, seed 2', 'Quadruped, seed 1', 'Quadruped, seed 2', 'Fish', 'Cheetah', 'Humanoid', 'Acrobot'], rowHead: 'Task', metric: 'Median |Δ|', labelW: 118,
+       x: {min: .003, max: .5, log: true, ticks: [.003, .01, .03, .1, .3], fmt: v => String(v)}, tfmt: v => v.toFixed(4),
+       rowColors: ['--s1','--s1','--s1','--s1','--s2','--s2','--s2', null],
+       series: [{name: 'Median |Δ|', color: '--s1', values: [.0057, .0059, .0065, .0054, .0231, .1459, .3086, null], missing: {7: '≈ 0; excluded'}}]},
+      {title: 'Capture at 10%', sub: 'Share of total gain', rows: ['Walker, seed 1', 'Walker, seed 2', 'Quadruped, seed 1', 'Quadruped, seed 2', 'Fish', 'Cheetah', 'Humanoid', 'Acrobot'], rowHead: 'Task', metric: 'Capture at 10%', labelW: 118,
+       x: {min: 0, max: 1, ticks: [0, .5, 1], fmt: pct}, stems: true,
+       rowColors: ['--s1','--s1','--s1','--s1','--s2','--s2','--s2', null],
+       series: [{name: 'Capture at 10%', color: '--s1', values: [.92, .93, .92, .79, .07, .33, .36, null], missing: {7: 'excluded'}}]}
+    ], legendItems: [['--s1', 'Passed the pre-registered ranking criterion'], ['--s2', 'Failed the criterion']]},
+    f10: {layout: 'side', panels: [
+      {title: 'Success rate', rows: ['No adaptation', 'Adapter-only', 'Full adaptation'], rowHead: 'Arm', metric: 'Success rate', labelW: 110, stems: true, valueLabels: true,
+       rowColors: ['--s0', '--s1', '--s2'], x: {min: 0, max: 1, ticks: [0, .5, 1], fmt: pct},
+       series: [{name: 'Success', color: '--s1', values: [.7, .8, .1]}]},
+      {title: 'Total variation from true probabilities', rows: ['No adaptation', 'Adapter-only', 'Full adaptation'], rowHead: 'Arm', metric: 'Total variation', labelW: 110, stems: true, valueLabels: true,
+       rowColors: ['--s0', '--s1', '--s2'], x: {min: 0, max: .6, ticks: [0, .2, .4, .6], fmt: v => v.toFixed(1)}, vfmt: f3,
+       series: [{name: 'Total variation', color: '--s1', values: [.302, .308, .552]}]}
+    ]},
+    f12: {panels: [{
+      rows: ['Canonical', 'Low density (×0.2)', 'High damping (×20)'], rowHead: 'Condition', metric: 'Success change (percentage points)', labelW: 140,
+      x: {min: -10, max: 15, ticks: [-10, -5, 0, 5, 10, 15], fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v), label: 'Change in success rate (percentage points)'},
+      tfmt: pp, vfmt: pp, valueLabels: true, ref: 0,
+      series: [{name: 'Full adaptation minus none', color: '--s1', values: [ci(3.3,-3.3,10.0), ci(8.0,3.3,12.7), ci(0.7,-6.0,7.3)]}]
+    }]},
+    f13: (function(){
+      const raw = [0.071, 6.017, 5.802, 1.307, 3.599, 4.609, -2.047, -0.445, -5.932, -5.005, -2.296, null, -2.044, -2.985, 4.188, -3.319, -5.452, -3.637, -1.762, 1.317];
+      const items = raw.map((v, i) => ({v, id: i})).filter(d => d.v != null).sort((a, b) => b.v - a.v);
+      return {legendItems: [['--s1', 'MPC obtained the higher return'], ['--s2', 'PPO obtained the higher return']], panels: [{
+        rows: items.map(d => 'Start ' + String(d.id).padStart(2, '0')), rowHead: 'Starting state', metric: 'Return difference (MPC − PPO)', labelW: 70, rowH: 17,
+        x: {min: -7, max: 7, ticks: [-6, -4, -2, 0, 2, 4, 6], fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v), label: 'Return difference, learned MPC minus PPO'},
+        tfmt: sgn, stems: true, stemBase: 0, band: [-2.26, 1.42], mean: -0.42, meanLabel: 'mean −0.42',
+        rowColors: items.map(d => d.v > 0 ? '--s1' : '--s2'),
+        series: [{name: 'Return difference', color: '--s1', values: items.map(d => d.v)}]
+      }]};
+    })()
+  };
+
+  const F11 = {
+    aria: 'Frontier of predictor-step savings against exact elite preservation',
+    x: {min: 0, max: 72, ticks: [0, 10, 20, 30, 40, 50, 60, 70], fmt: v => v + '%', tfmt: v => (v < 1 ? v.toFixed(2) : v.toFixed(1)) + '%', label: 'Predictor steps saved'},
+    y: {min: 0, max: 100, ticks: [0, 25, 50, 75, 100], fmt: v => v + '%', tfmt: v => (v % 1 ? v.toFixed(3).replace(/0+$/, '') : v) + '%', label: 'Batches with exact elite set'},
+    points: [
+      {x: 0, y: 100, name: 'Budget 200 (no pruning)', label: 'budget 200 (no pruning)', dx: 12, dy: -4},
+      {x: 16, y: 17.4, name: 'Rank budget 160', label: '160', dx: 0, dy: -12, anchor: 'middle'},
+      {x: 32, y: 5.8, name: 'Rank budget 120', label: '120', dx: 0, dy: -12, anchor: 'middle'},
+      {x: 48, y: 1.6, name: 'Rank budget 80', label: '80', dx: 0, dy: -12, anchor: 'middle'},
+      {x: 68, y: 0, name: 'Rank budget 30', label: '30', dx: 0, dy: -12, anchor: 'middle'}
+    ],
+    extra: [{x: 0.83, y: 99.795, name: 'Calibrated rank gate, held-out data', label: 'calibrated gate: 0.83% saved, 99.8% exact', dx: 20, dy: 24}]
+  };
+
+  function legendHTML(items){ return items.map(([c, n]) => `<span><i style="background:var(${c})"></i>${n}</span>`).join(''); }
+
+  function build(){
+    document.querySelectorAll('.chart-host').forEach(host => {
+      const id = host.dataset.fig;
+      if (id === 'f11'){ drawF11(host); return; }
+      const fig = FIGS[id];
+      if (!fig) return;
+      if (!host._built){
+        host._built = true;
+        const legendSlot = document.querySelector(`[data-legend="${id}"]`);
+        const firstLegend = fig.panels[0].legend ? fig.panels[0].series.map(s => [s.color, s.name]) : null;
+        const legendItems = fig.legendItems || firstLegend || (fig.legendFrom != null ? fig.panels[fig.legendFrom].series.map(s => [s.color, s.name]) : null);
+        if (legendItems){
+          const lg = legendSlot || document.createElement('div');
+          lg.className = 'legend'; lg.innerHTML = legendHTML(legendItems);
+          if (!legendSlot) host.parentNode.insertBefore(lg, host);
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'panels' + (fig.layout === 'side' ? ' side' : '');
+        host.appendChild(wrap);
+        host._charts = fig.panels.map(p => {
+          const box = document.createElement('div');
+          if (p.title){ const t = document.createElement('p'); t.className = 'panel-title'; t.textContent = p.title; box.appendChild(t); }
+          if (p.sub){ const s = document.createElement('p'); s.className = 'panel-sub'; s.textContent = p.sub; box.appendChild(s); }
+          const c = document.createElement('div'); c.className = 'chart'; box.appendChild(c);
+          wrap.appendChild(box);
+          return [c, p];
+        });
+        const det = document.createElement('details'); det.className = 'tv';
+        det.innerHTML = '<summary>Show data table</summary>';
+        fig.panels.forEach(p => {
+          if (p.title && fig.panels.length > 1){ const t = document.createElement('p'); t.className = 'panel-title'; t.style.marginTop = '12px'; t.textContent = p.title; det.appendChild(t); }
+          det.appendChild(tableFor(p));
+        });
+        host.parentNode.insertBefore(det, host.nextSibling);
+      }
+      host._charts.forEach(([c, p]) => renderDots(c, p));
+    });
+  }
+  function drawF11(host){
+    if (!host._built){
+      host._built = true;
+      const c = document.createElement('div'); c.className = 'chart'; host.appendChild(c); host._c = c;
+      const lg = document.createElement('div'); lg.className = 'legend';
+      lg.innerHTML = legendHTML([['--s1', 'Fixed prefix-rank budget (candidates retained of 200)'], ['--s2', 'Calibrated gate on held-out data']]);
+      host.parentNode.insertBefore(lg, host);
+      const det = document.createElement('details'); det.className = 'tv';
+      det.innerHTML = '<summary>Show data table</summary>'; det.appendChild(tableXY(F11));
+      host.parentNode.insertBefore(det, host.nextSibling);
+    }
+    renderXY(host._c, F11);
+  }
+  build();
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(build);
+
+  /* ---------- contents highlighting ---------- */
+  const links = Array.from(document.querySelectorAll('.toc a'));
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  if ('IntersectionObserver' in window){
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting){ links.forEach(l => l.classList.remove('active')); const a = map.get(e.target.id); if (a) a.classList.add('active'); } });
+    }, {rootMargin: '-20% 0px -70% 0px'});
+    map.forEach((a, id) => { const s = document.getElementById(id); if (s) io.observe(s); });
+  }
+})();
+</script>
+
+</body></html>
