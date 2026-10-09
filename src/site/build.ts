@@ -11,24 +11,11 @@ import { SiteLayout } from './layout/SiteLayout.js';
 import { Report } from '../components/layout/Report.js';
 import { defaultComponents } from '../components/index.js';
 import { getTheme, getFontHeadTags } from '../themes/index.js';
-import { getFullReportCss } from '../compiler/css.js';
+import { getFullReportCss, getSiteCss } from '../compiler/css.js';
 import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
 import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
 import { INKBLOT_SITE_SCRIPT } from './runtime.js';
 import type { SiteConfig, SitePage, SidebarSection } from './types.js';
-
-function getSiteCss(): string {
-  try {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const candidate = path.resolve(__dirname, '../themes/styles/site.css');
-    if (fs.existsSync(candidate)) return fs.readFileSync(candidate, 'utf-8');
-  } catch {}
-
-  const workspaceCandidate = path.resolve(process.cwd(), 'src/themes/styles/site.css');
-  if (fs.existsSync(workspaceCandidate)) return fs.readFileSync(workspaceCandidate, 'utf-8');
-
-  return '';
-}
 
 function copyDirRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;

@@ -162,9 +162,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--serif);
-  font-size: 17.5px;
-  line-height: 1.68;
-  padding-inline: 20px;
+  font-size: 16.5px;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -190,41 +189,55 @@ a:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
 }
 
 /* ==========================================================================
-   Page Layout
+   Page Layout (Responsive Single-Column to Right-Sidebar TOC)
    ========================================================================== */
 
 .inkblot-page, .page {
-  display: grid;
-  grid-template-columns: minmax(0, 840px);
-  justify-content: center;
-  gap: 52px;
-  padding-block: 48px 96px;
+  display: block;
+  max-width: 860px;
   margin: 0 auto;
+  padding: 40px 24px 96px;
+  width: 100%;
 }
 
-@media (min-width: 1180px) {
-  .inkblot-page, .page {
-    grid-template-columns: 240px minmax(0, 840px);
-  }
+.inkblot-main, main {
+  min-width: 0;
+  width: 100%;
 }
 
-/* Desktop Sidebar TOC */
 .inkblot-toc, .toc {
   display: none;
 }
 
-@media (min-width: 1180px) {
+@media (min-width: 1200px) {
+  .inkblot-page, .page {
+    display: grid;
+    grid-template-columns: minmax(0, 840px) 240px;
+    justify-content: center;
+    gap: 56px;
+    max-width: 1200px;
+    padding: 48px 32px 112px;
+  }
+
+  .inkblot-main, main {
+    order: 1;
+    min-width: 0;
+  }
+
   .inkblot-toc, .toc {
     display: block;
+    order: 2;
     position: sticky;
-    top: calc(env(safe-area-inset-top, 0px) + 32px);
+    top: 40px;
     align-self: start;
-    max-height: calc(100vh - 64px);
+    max-height: calc(100vh - 80px);
     overflow-y: auto;
     font-family: var(--sans);
     font-size: 13px;
-    line-height: 1.4;
-    padding-right: 8px;
+    line-height: 1.45;
+    padding-left: 16px;
+    padding-right: 4px;
+    border-left: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
   }
 
   .inkblot-toc-mobile, .toc-mobile {
@@ -232,13 +245,14 @@ a:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
   }
 }
 
-.inkblot-toc h2, .toc h2,
-.inkblot-toc-mobile summary, .toc-mobile summary {
+.inkblot-toc h2, .toc h2 {
   font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  margin: 0 0 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 12px;
 }
 
 .inkblot-toc ol, .toc ol {
@@ -246,66 +260,81 @@ a:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: 3px;
 }
 
 .inkblot-toc a, .toc a {
-  display: grid;
-  grid-template-columns: 26px 1fr;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   color: var(--ink-2);
   text-decoration: none;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: background 0.15s ease, color 0.15s ease;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: all 0.15s ease;
 }
 
 .inkblot-toc a span, .toc a span {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .inkblot-toc a:hover, .toc a:hover {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
   color: var(--ink);
 }
 
 .inkblot-toc a.active, .toc a.active {
-  color: var(--ink);
+  color: var(--accent);
   background: var(--accent-soft);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .inkblot-toc a.active span, .toc a.active span {
-  color: var(--ink-2);
+  color: var(--accent);
 }
 
 .inkblot-toc .sub a, .toc .sub a {
-  padding-left: 12px;
+  padding-left: 16px;
+  font-size: 12.5px;
 }
 
 /* Mobile Collapsible TOC */
 .inkblot-toc-mobile, .toc-mobile {
-  border-block: 1px solid var(--rule);
-  padding-block: 12px;
-  margin-block: 0 40px;
+  background: color-mix(in srgb, var(--surface) 80%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--rule) 75%, transparent);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0 0 36px;
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .inkblot-toc-mobile summary, .toc-mobile summary {
   cursor: pointer;
   margin: 0;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .inkblot-toc-mobile ol, .toc-mobile ol {
   margin: 12px 0 0;
-  padding-left: 20px;
+  padding-left: 16px;
   display: grid;
-  gap: 4px;
+  gap: 5px;
 }
 
 .inkblot-toc-mobile a, .toc-mobile a {
   color: var(--ink-2);
+  text-decoration: none;
+}
+
+.inkblot-toc-mobile a:hover, .toc-mobile a:hover {
+  color: var(--accent);
 }
 
 /* Main Content Area */
@@ -346,16 +375,18 @@ h1 {
 
 .abstract {
   margin-top: 36px;
+  margin-bottom: 40px;
   background: color-mix(in srgb, var(--accent) 5%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  border-left: 4px solid var(--accent);
   border-radius: 14px;
-  padding: 24px 28px;
+  padding: 24px 30px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .abstract h2 {
   font-family: var(--sans);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -366,8 +397,8 @@ h1 {
 
 .abstract p {
   margin: 0 0 12px;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 15.5px;
+  line-height: 1.68;
   color: var(--ink-2);
 }
 
@@ -529,44 +560,45 @@ pre code {
 
 .question {
   background: color-mix(in srgb, var(--accent) 6%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
   border-left: 4px solid var(--accent);
   border-radius: 12px;
-  padding: 18px 22px;
-  margin: 24px 0 28px;
+  padding: 20px 24px;
+  margin: 28px 0 32px;
   transition: border-color 0.15s ease;
 }
 
 .question-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: var(--sans);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--accent);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .question-body, .question p {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.62;
   color: var(--ink);
 }
 
 .aside {
   position: relative;
-  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
   border-left: 4px solid var(--accent);
   border-radius: 12px;
-  padding: 18px 22px;
-  margin: 24px 0 28px;
-  font-size: 15.5px;
-  line-height: 1.62;
+  padding: 20px 24px;
+  margin: 28px 0 32px;
+  font-size: 15px;
+  line-height: 1.65;
   color: var(--ink);
   transition: border-color 0.15s ease;
 }
@@ -574,8 +606,8 @@ pre code {
 .aside-head {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .aside-icon {
@@ -589,13 +621,17 @@ pre code {
 .aside-title, .aside h4 {
   margin: 0;
   font-family: var(--sans);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--accent);
 }
 
 .aside-body {
+  font-family: var(--sans);
+  font-size: 14.5px;
+  line-height: 1.65;
   color: var(--ink-2);
 }
 
@@ -660,11 +696,12 @@ pre code {
 
 .tablewrap {
   overflow-x: auto;
-  margin: 20px 0 32px;
+  margin: 28px 0 36px;
   background: var(--surface);
-  border: 1px solid var(--rule);
+  border: 1px solid color-mix(in srgb, var(--rule) 75%, transparent);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -672,7 +709,7 @@ table {
   width: 100%;
   font-family: var(--sans);
   font-size: 13.5px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 caption {
@@ -681,7 +718,7 @@ caption {
   font-family: var(--sans);
   font-size: 13.5px;
   color: var(--ink-2);
-  padding: 14px 16px 8px;
+  padding: 16px 20px 10px;
   line-height: 1.5;
 }
 
@@ -696,13 +733,19 @@ thead {
 }
 
 th, td {
-  padding: 12px 16px;
+  padding: 14px 18px;
   text-align: left;
   vertical-align: middle;
 }
 
+th p, td p {
+  margin: 0;
+  max-width: none;
+  line-height: inherit;
+}
+
 thead th {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -740,34 +783,83 @@ tr.hl td {
   background: color-mix(in srgb, var(--accent) 5%, transparent);
 }
 
+.sumtable {
+  min-width: 680px;
+}
+
 .sumtable td:first-child {
   white-space: nowrap;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  width: 36px;
+}
+
+.sumtable td:nth-child(2) {
+  min-width: 200px;
 }
 
 .sumtable td:nth-child(2) a {
   font-weight: 600;
   color: var(--ink);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .sumtable td:nth-child(2) a:hover {
   color: var(--accent);
 }
 
+.sumtable td:nth-child(4) {
+  min-width: 220px;
+}
+
+.sumtable td a.tlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sumtable td a.tlink:hover {
+  text-decoration: underline;
+}
+
+.inkblot-sparkline-wrap {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 figure, .inkblot-3d-figure, .inkblot-slopegraph-wrap, .inkblot-small-multiples {
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  padding: 22px 24px;
-  margin: 28px 0 36px;
-  transition: border-color 0.15s ease;
+  padding: 24px 28px;
+  margin: 32px 0 40px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 figure:hover, .inkblot-3d-figure:hover, .inkblot-slopegraph-wrap:hover, .inkblot-small-multiples:hover {
   border-color: var(--rule-strong);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+figure .inkblot-slopegraph-wrap,
+figure .inkblot-small-multiples,
+figure .inkblot-3d-figure {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
 }
 
 .fig-head {

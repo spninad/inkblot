@@ -35,16 +35,16 @@ export const SmallMultiples: React.FC<SmallMultiplesProps> = ({
   const range = actualMax - actualMin || 1;
 
   return (
-    <div className={`inkblot-small-multiples ${className}`.trim()} style={{ margin: '24px 0' }}>
+    <div className={`inkblot-small-multiples ${className}`.trim()}>
       {title && <p className="panel-title">{title}</p>}
       {subtitle && <p className="panel-sub">{subtitle}</p>}
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(auto-fit, minmax(180px, 1fr))`,
-          gap: '16px',
-          marginTop: '12px',
+          gridTemplateColumns: `repeat(auto-fit, minmax(210px, 1fr))`,
+          gap: '18px',
+          marginTop: '16px',
         }}
       >
         {panels.map((p, idx) => {
@@ -69,18 +69,19 @@ export const SmallMultiples: React.FC<SmallMultiplesProps> = ({
             <div
               key={idx}
               style={{
-                border: '1px solid var(--rule)',
-                borderRadius: '6px',
-                padding: '10px 12px',
-                background: 'var(--surface)',
+                border: '1px solid color-mix(in srgb, var(--rule) 70%, transparent)',
+                borderRadius: '10px',
+                padding: '14px 16px',
+                background: 'color-mix(in srgb, var(--surface) 80%, var(--bg))',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink)' }}>
                   {p.title}
                 </span>
                 {p.subtitle && (
-                  <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted)' }}>
                     {p.subtitle}
                   </span>
                 )}

@@ -27,7 +27,7 @@ export const Plot3D: React.FC<Plot3DProps> = ({
   const dataPayload = data ? JSON.stringify(data) : '';
 
   return (
-    <figure className={`inkblot-3d-figure ${className}`.trim()} style={{ margin: '32px 0' }}>
+    <figure className={`inkblot-3d-figure ${className}`.trim()}>
       {(title || subtitle) && (
         <div className="fig-head">
           {title && <b>{title} </b>}
@@ -44,9 +44,9 @@ export const Plot3D: React.FC<Plot3DProps> = ({
           width,
           height: `${height}px`,
           position: 'relative',
-          borderRadius: '8px',
+          borderRadius: '10px',
           overflow: 'hidden',
-          border: '1px solid var(--rule-strong)',
+          border: '1px solid color-mix(in srgb, var(--rule) 70%, transparent)',
           background: 'var(--surface)',
         }}
       >
@@ -77,7 +77,7 @@ export const Plot3D: React.FC<Plot3DProps> = ({
             bottom: '12px',
             right: '12px',
             display: 'flex',
-            gap: '6px',
+            gap: '8px',
             zIndex: 10,
           }}
         >
@@ -87,14 +87,17 @@ export const Plot3D: React.FC<Plot3DProps> = ({
             data-3d-action="rotate"
             title="Toggle Auto-Rotation"
             style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--rule)',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '11px',
+              background: 'color-mix(in srgb, var(--surface) 90%, transparent)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid color-mix(in srgb, var(--rule) 85%, transparent)',
+              borderRadius: '6px',
+              padding: '5px 10px',
+              fontSize: '11.5px',
+              fontWeight: 500,
               fontFamily: 'var(--sans)',
               color: 'var(--ink-2)',
               cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
             }}
           >
             Auto-Rotate
@@ -105,14 +108,17 @@ export const Plot3D: React.FC<Plot3DProps> = ({
             data-3d-action="reset"
             title="Reset Camera"
             style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--rule)',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '11px',
+              background: 'color-mix(in srgb, var(--surface) 90%, transparent)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid color-mix(in srgb, var(--rule) 85%, transparent)',
+              borderRadius: '6px',
+              padding: '5px 10px',
+              fontSize: '11.5px',
+              fontWeight: 500,
               fontFamily: 'var(--sans)',
               color: 'var(--ink-2)',
               cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
             }}
           >
             Reset

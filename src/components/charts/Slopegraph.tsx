@@ -27,8 +27,8 @@ export const Slopegraph: React.FC<SlopegraphProps> = ({
   rightLabel,
   items,
   valueFormat = (v) => `${(v * 100).toFixed(1)}%`,
-  height = 360,
-  width = 560,
+  height = 380,
+  width = 640,
   className = '',
 }) => {
   const allVals = items.flatMap((i) => [i.leftVal, i.rightVal]);
@@ -36,10 +36,10 @@ export const Slopegraph: React.FC<SlopegraphProps> = ({
   const maxVal = Math.max(...allVals);
   const valRange = maxVal - minVal || 1;
 
-  const topPad = 48;
-  const bottomPad = 24;
-  const leftX = 140;
-  const rightX = width - 140;
+  const topPad = 52;
+  const bottomPad = 28;
+  const leftX = 180;
+  const rightX = width - 180;
   const plotH = height - topPad - bottomPad;
 
   const getY = (val: number) => {
@@ -47,7 +47,7 @@ export const Slopegraph: React.FC<SlopegraphProps> = ({
   };
 
   return (
-    <div className={`inkblot-slopegraph-wrap ${className}`.trim()} style={{ margin: '24px 0' }}>
+    <div className={`inkblot-slopegraph-wrap ${className}`.trim()}>
       {title && <p className="panel-title">{title}</p>}
       {subtitle && <p className="panel-sub">{subtitle}</p>}
 

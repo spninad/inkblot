@@ -6,8 +6,32 @@ import type { ThemeConfig } from '../themes/types.js';
 
 let cachedBaseCss: string | null = null;
 let cachedKatexCss: string | null = null;
+let cachedSiteCss: string | null = null;
 
-function resolvePackageFile(relativePath: string): string {
+function findInkblotPackageRoot(): string | null {
+  try {
+    let curr = path.dirname(fileURLToPath(import.meta.url));
+    while (curr && curr !== path.dirname(curr)) {
+      const pkgPath = path.join(curr, 'package.json');
+      if (fs.existsSync(pkgPath)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+          if (pkg.name === 'inkblot') return curr;
+        } catch {}
+      }
+      curr = path.dirname(curr);
+    }
+  } catch {}
+  return null;
+}
+
+export function resolvePackageFile(relativePath: string): string {
+  const pkgRoot = findInkblotPackageRoot();
+  if (pkgRoot) {
+    const candidate = path.resolve(pkgRoot, relativePath);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
   // Try current directory / relative to file
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,9 +50,9 @@ export function getBaseInkblotCss(): string {
   if (cachedBaseCss) return cachedBaseCss;
 
   const candidates = [
-    resolvePackageFile('../themes/styles/inkblot.css'),
-    resolvePackageFile('dist/style.css'),
     resolvePackageFile('src/themes/styles/inkblot.css'),
+    resolvePackageFile('dist/style.css'),
+    resolvePackageFile('../themes/styles/inkblot.css'),
   ];
 
   for (const c of candidates) {
@@ -43,10 +67,30 @@ export function getBaseInkblotCss(): string {
   return '';
 }
 
+export function getSiteCss(): string {
+  if (cachedSiteCss) return cachedSiteCss;
+
+  const candidates = [
+    resolvePackageFile('src/themes/styles/site.css'),
+    resolvePackageFile('dist/site.css'),
+    resolvePackageFile('../themes/styles/site.css'),
+  ];
+
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      cachedSiteCss = fs.readFileSync(c, 'utf-8');
+      return cachedSiteCss;
+    }
+  }
+
+  return '';
+}
+
 export function getKatexCss(): string {
   if (cachedKatexCss) return cachedKatexCss;
 
   const candidates = [
+    resolvePackageFile('node_modules/katex/dist/katex.min.css'),
     path.resolve(process.cwd(), 'node_modules/katex/dist/katex.min.css'),
     resolvePackageFile('../../node_modules/katex/dist/katex.min.css'),
   ];

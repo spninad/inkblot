@@ -40,7 +40,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "bun run tests/test-api.ts && bun run tests/test-edge-cases.ts && bun run tests/test-next-adapter.ts && bun run tests/test-site-server.ts && bun run tests/test-visualizations.ts",
+    "test": "bun run tests/test-api.ts && bun run tests/test-edge-cases.ts && bun run tests/test-next-adapter.ts && bun run tests/test-site-server.ts && bun run tests/test-visualizations.ts && bun run tests/test-visual-qa.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

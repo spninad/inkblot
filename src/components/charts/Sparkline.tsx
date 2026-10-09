@@ -58,6 +58,8 @@ export const Sparkline: React.FC<SparklineProps> = ({
         alignItems: 'center',
         verticalAlign: 'middle',
         marginInline: '4px',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
       }}
     >
       <svg
