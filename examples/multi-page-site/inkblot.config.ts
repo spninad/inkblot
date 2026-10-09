@@ -12,6 +12,7 @@ export default defineConfig({
     { title: 'Latent Geometry', href: '/studies/representation-geometry' },
     { title: 'World Models', href: '/studies/study-1' },
     { title: 'Benchmarks', href: '/benchmarks' },
+    { title: 'Standalone Single-File', href: '/standalone-report.html' },
   ],
   sidebar: 'auto',
   footer: {
