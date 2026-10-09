@@ -20,6 +20,10 @@ export * from './charts/Figure.js';
 export * from './charts/DotPlot.js';
 export * from './charts/XYPlot.js';
 export * from './charts/Diagram.js';
+export * from './charts/Sparkline.js';
+export * from './charts/Slopegraph.js';
+export * from './charts/SmallMultiples.js';
+export * from './charts/Plot3D.js';
 
 // Math
 export * from './math/Equation.js';
@@ -38,6 +42,10 @@ import { Figure } from './charts/Figure.js';
 import { DotPlot } from './charts/DotPlot.js';
 import { XYPlot } from './charts/XYPlot.js';
 import { Diagram } from './charts/Diagram.js';
+import { Sparkline } from './charts/Sparkline.js';
+import { Slopegraph } from './charts/Slopegraph.js';
+import { SmallMultiples } from './charts/SmallMultiples.js';
+import { Plot3D } from './charts/Plot3D.js';
 import { Equation } from './math/Equation.js';
 
 /**
@@ -63,6 +71,10 @@ export const defaultComponents: Record<string, React.ComponentType<any>> = {
   DotPlot,
   XYPlot,
   Diagram,
+  Sparkline,
+  Slopegraph,
+  SmallMultiples,
+  Plot3D,
   Equation,
   Math: Equation, // Alias
 

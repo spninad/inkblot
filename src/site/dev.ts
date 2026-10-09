@@ -14,6 +14,7 @@ import { defaultComponents } from '../components/index.js';
 import { getTheme, getFontHeadTags } from '../themes/index.js';
 import { getFullReportCss } from '../compiler/css.js';
 import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
+import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
 import { INKBLOT_SITE_SCRIPT } from './runtime.js';
 
 function getSiteCss(): string {
@@ -49,7 +50,7 @@ export async function devSite(options: DevSiteOptions = {}): Promise<void> {
   const baseReportCss = getFullReportCss(theme);
   const siteCss = getSiteCss();
   const fullCss = `${baseReportCss}\n\n${siteCss}`;
-  const combinedJs = `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_SITE_SCRIPT}`;
+  const combinedJs = `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_SITE_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`;
   const fontTags = getFontHeadTags(theme.name);
 
   const server = http.createServer(async (req, res) => {

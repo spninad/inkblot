@@ -32,7 +32,7 @@ async function testSiteDevServer() {
   console.log('Test 1: GET /');
   const rootRes = await get('/');
   assert.strictEqual(rootRes.status, 200);
-  assert.ok(rootRes.text.includes('Research Monograph Series'));
+  assert.ok(rootRes.text.includes('Frontier AI Research Monographs'));
   assert.ok(rootRes.text.includes('class="inkblot-site-header"'));
   console.log('  ✅ GET / passed\n');
 

@@ -8,6 +8,7 @@ import { Report } from '../components/layout/Report.js';
 import { getTheme, getFontHeadTags } from '../themes/index.js';
 import { getFullReportCss } from './css.js';
 import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
+import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
 import type {
   CompiledReport,
   RenderHtmlOptions,
@@ -66,7 +67,10 @@ export async function renderReportToHtml(
   }
 
   const fontTags = getFontHeadTags(theme.name);
-  const clientScript = options.clientScript !== false ? INKBLOT_CLIENT_SCRIPT : '';
+  const clientScript =
+    options.clientScript !== false
+      ? `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`
+      : '';
 
   const fullHtml = `<!doctype html>
 <html lang="en" data-theme="${theme.name}">

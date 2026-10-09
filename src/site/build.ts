@@ -13,6 +13,7 @@ import { defaultComponents } from '../components/index.js';
 import { getTheme, getFontHeadTags } from '../themes/index.js';
 import { getFullReportCss } from '../compiler/css.js';
 import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
+import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
 import { INKBLOT_SITE_SCRIPT } from './runtime.js';
 import type { SiteConfig, SitePage, SidebarSection } from './types.js';
 
@@ -95,7 +96,7 @@ export async function buildSite(options: BuildSiteOptions = {}): Promise<BuildSi
   fs.writeFileSync(path.join(assetsDir, 'site.css'), fullCss, 'utf-8');
 
   // 3. Generate Client Scripts
-  const combinedJs = `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_SITE_SCRIPT}`;
+  const combinedJs = `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_SITE_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`;
   fs.writeFileSync(path.join(assetsDir, 'site.js'), combinedJs, 'utf-8');
 
   // 4. Generate Search Index JSON

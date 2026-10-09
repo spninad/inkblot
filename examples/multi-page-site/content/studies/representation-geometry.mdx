@@ -1,0 +1,66 @@
+---
+title: "Geometry of Latent World Models: Curvature & Invariance"
+date: "October 2026"
+abstract: |
+  We examine how non-Euclidean representation geometry affects long-horizon rollout accuracy
+  in learned world models. Using discrete Ricci curvature estimators, we show that regions of
+  negative sectional curvature correspond to error explosion in autoregressive dynamics.
+  Regularizing the latent metric tensor stabilizes multi-step rollouts without expanding model capacity.
+---
+
+<Section number="1" title="Curvature in Learned Latent Spaces">
+
+In joint-embedding world models, an encoder $E_\theta: \mathcal{X} \to \mathcal{Z}$ maps high-dimensional sensory observations into a continuous latent space $\mathcal{Z}$. The dynamics model $T_\phi: \mathcal{Z} \times \mathcal{A} \to \mathcal{Z}$ predicts future states:
+
+<Equation
+  math="\mathbf{z}_{t+1} = T_\phi(\mathbf{z}_t, \mathbf{a}_t) = \mathbf{z}_t + \int_0^1 \mathbf{v}_\phi(\gamma(s))\,\mathrm{d}s"
+  display={true}
+  caption="Continuous latent transition parameterized as integral flow."
+/>
+
+To assess geometric stability, we measure the Ollivier-Ricci curvature $\kappa(x, y)$ between neighboring latent states:
+
+<Equation
+  math="\kappa(x, y) = 1 - \frac{W_1\left(m_x, m_y\right)}{d(x, y)}"
+  display={true}
+  caption="Ollivier-Ricci curvature via Wasserstein distance between local probability measures."
+/>
+
+When $\kappa(x, y) < 0$, latent geodesics diverge exponentially, producing catastrophic compounding error over long rollout horizons.
+
+</Section>
+
+<Section number="2" title="3D Latent Manifold Projection">
+
+Below is an interactive 3D WebGL visualization of the learned latent manifold under different representation regularization schemes. Notice how metric curvature regularization clusters semantically related trajectories into well-behaved geodesic bundles.
+
+<Plot3D
+  type="latent-manifold"
+  title="Figure 1: 3D Latent Manifold Clustered by Task Phase"
+  subtitle="Interactive WebGL point cloud illustrating curvature-regularized token embeddings"
+  caption="Drag to orbit; scroll wheel to zoom. Point clouds colored by trajectory cluster identity."
+  height={420}
+/>
+
+</Section>
+
+<Section number="3" title="Layer-Wise Curvature Profiles & Small Multiples">
+
+We evaluate the sectional curvature distribution across network depth for six architectural variants. Tufte small multiples allow comparing all six depth profiles under identical scale limits.
+
+<SmallMultiples
+  title="Figure 2: Layer-Wise Ricci Curvature Distributions"
+  subtitle="Curvature index κ across Transformer layers 1 through 12 (scale [-0.5, +0.8])"
+  yMin={-0.5}
+  yMax={0.8}
+  panels={[
+    { title: "Standard JEPA", subtitle: "Baseline", data: [-0.4, -0.3, -0.2, -0.1, 0.05, 0.12] },
+    { title: "Metric Normed", subtitle: "Ours", data: [0.1, 0.25, 0.42, 0.55, 0.62, 0.70], highlight: true },
+    { title: "Conformal VAE", subtitle: "Probabilistic", data: [-0.2, -0.1, 0.0, 0.15, 0.25, 0.32] },
+    { title: "Symplectic Flow", subtitle: "Hamiltonian", data: [0.05, 0.18, 0.30, 0.45, 0.52, 0.58], highlight: true },
+    { title: "Contrastive Prior", subtitle: "Self-Supervised", data: [-0.35, -0.20, -0.05, 0.10, 0.20, 0.28] },
+    { title: "Spectral Bound", subtitle: "Lipschitz", data: [0.0, 0.12, 0.22, 0.35, 0.44, 0.49] },
+  ]}
+/>
+
+</Section>

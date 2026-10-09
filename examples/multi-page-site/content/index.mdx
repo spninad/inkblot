@@ -1,36 +1,101 @@
 ---
-title: "Research Monograph Series"
+title: "Frontier AI Research Monographs"
 date: "October 2026"
 abstract: |
-  Welcome to the open technical record of research studies. This site houses our
-  empirical findings, world model evaluations, and benchmark records.
+  An open technical repository documenting empirical evaluations, geometric deep learning
+  frameworks, and continuous trajectory planners for autonomous embodied systems. All monographs
+  feature interactive 3D WebGL visualizations, rigorous mathematical formulations, and Tufte-style
+  data graphics.
 ---
 
-<Section number="1" title="Overview">
+<Section number="1" title="Research Program & Latent Manifold Explorer">
 
-This research repository collects peer-reviewed technical monographs and replication studies.
-Use the sidebar navigation or search bar above to explore individual studies.
+Our research focuses on the geometric foundations of generative modeling and decision-making in high-dimensional continuous spaces. Below is an interactive 3D WebGL projection of token representations across three foundational architectures: Joint-Embedding Predictive Architectures (blue), Score-Based Diffusion Planners (orange), and Policy Priors (green).
 
-<SummaryTable
-  caption={<><b>Recent Studies</b></>}
-  rows={[
-    {
-      id: 1,
-      title: "Planning with Learned World Models",
-      subtitle: "Seven empirical studies under limited data",
-      href: "/studies/study-1",
-      setting: "PointMaze, DMControl",
-      outcome: "Empirical record complete"
-    },
-    {
-      id: 2,
-      title: "Benchmark Comparisons",
-      subtitle: "Learned MPC vs Model-Free Baselines",
-      href: "/benchmarks",
-      setting: "Continuous Control",
-      outcome: "Frontier established"
-    }
-  ]}
+<Plot3D
+  type="latent-manifold"
+  title="Figure 1: Clustered 3D Latent Representation Space"
+  subtitle="Interactive WebGL point cloud illustrating geometric separation among token clusters"
+  caption="Drag to orbit; scroll wheel to zoom. Blue clusters represent JEPA state representations; orange clusters represent diffusion score latents; green clusters represent policy prior embeddings."
+  height={420}
 />
+
+</Section>
+
+<Section number="2" title="Monograph Index & Convergence Traces">
+
+The table below summarizes our current monograph portfolio, detailing the target domain, primary theoretical result, and training convergence loss trends.
+
+<div className="tablewrap">
+<table className="sumtable">
+  <thead>
+    <tr>
+      <th style={{ width: '32px' }}>#</th>
+      <th>Study</th>
+      <th>Domain</th>
+      <th>Primary Finding</th>
+      <th style={{ textAlign: 'center' }}>Loss Trend</th>
+      <th className="num">Read</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>
+        <a href="/studies/diffusion-planning" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'none' }}>
+          Riemannian Diffusion Trajectory Planners
+        </a>
+        <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
+          Continuous action planning via geodesic score matching
+        </div>
+      </td>
+      <td>Embodied Robotics</td>
+      <td>+28.7% task completion over Euclidean score matching</td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[3.2, 2.4, 1.6, 0.9, 0.4, 0.18, 0.08]} color="--s1" highlightLast={true} />
+      </td>
+      <td className="num"><a href="/studies/diffusion-planning" className="tlink">Report →</a></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>
+        <a href="/studies/representation-geometry" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'none' }}>
+          Geometry of Latent World Models
+        </a>
+        <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
+          Curvature and topological invariance under distribution shift
+        </div>
+      </td>
+      <td>Representation Learning</td>
+      <td>Zero-shot generalization bounded by Ricci curvature</td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[2.8, 2.1, 1.8, 1.3, 0.85, 0.52, 0.38]} color="--s2" highlightLast={true} />
+      </td>
+      <td className="num"><a href="/studies/representation-geometry" className="tlink">Report →</a></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>
+        <a href="/studies/study-1" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'none' }}>
+          Sample-Efficient World Models
+        </a>
+        <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
+          Seven empirical studies under extreme data starvation
+        </div>
+      </td>
+      <td>PointMaze & Control</td>
+      <td>Asymptotic sample optimality under 100k transitions</td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[4.1, 3.2, 2.5, 1.9, 1.4, 1.1, 0.92]} color="--ink-2" highlightLast={true} />
+      </td>
+      <td className="num"><a href="/studies/study-1" className="tlink">Report →</a></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<Aside type="tip" title="Interactive Navigation">
+Use the search input in the site header or press keyboard shortcuts to jump directly to any section, equation, or figure across the entire monograph corpus.
+</Aside>
 
 </Section>

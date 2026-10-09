@@ -17,3 +17,4 @@ export * from './themes/index.js';
 
 // Client Micro-Runtime
 export { INKBLOT_CLIENT_SCRIPT } from './runtime/client.js';
+export { INKBLOT_THREE_SCRIPT } from './runtime/three-runtime.js';

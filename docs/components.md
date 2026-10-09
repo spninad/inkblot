@@ -191,6 +191,78 @@ Container for SVG workflow and architecture diagrams with pre-styled arrow marke
 
 ---
 
+### `<Sparkline>`
+Word-sized inline trend graphic designed following Edward Tufte's principles. Embeds seamlessly into paragraphs or table cells.
+
+```mdx
+<Sparkline
+  data={[2.84, 2.15, 1.42, 0.88, 0.43, 0.22, 0.11]}
+  color="--s1"
+  highlightLast={true}
+  width={64}
+  height={16}
+/>
+```
+
+---
+
+### `<Slopegraph>`
+Paired before/after comparison graphic with direct data labels and tabular numbers, maximizing the data-ink ratio.
+
+```mdx
+<Slopegraph
+  title="Figure 2: Performance Lift from Test-Time Riemannian Guidance"
+  leftLabel="Zero-Shot Policy"
+  rightLabel="Riemannian Score Guided"
+  items={[
+    { label: "Franka-Kitchen", leftVal: 0.624, rightVal: 0.968, highlight: true },
+    { label: "PointMaze-Hard", leftVal: 0.481, rightVal: 0.942, highlight: true },
+    { label: "AntMaze-Dense", leftVal: 0.412, rightVal: 0.884 }
+  ]}
+/>
+```
+
+---
+
+### `<SmallMultiples>`
+Multi-panel micro-chart grid sharing identical axis bounds, allowing instant visual comparison across seeds, layers, or hyperparameter sweeps.
+
+```mdx
+<SmallMultiples
+  title="Figure 3: Seed Invariance across Initializations"
+  yMin={0.0}
+  yMax={3.0}
+  panels={[
+    { title: "Seed 42", subtitle: "Kitchen", data: [2.8, 2.0, 1.3, 0.7, 0.3, 0.12], highlight: true },
+    { title: "Seed 101", subtitle: "Maze", data: [2.9, 2.1, 1.4, 0.8, 0.35, 0.14] }
+  ]}
+/>
+```
+
+---
+
+### `<Plot3D>`
+Interactive 3D WebGL visualization container powered by Three.js with pointer drag orbit, mouse wheel zoom, and auto-rotation toggle.
+
+| Prop | Type | Description |
+| :--- | :--- | :--- |
+| `type` | `'loss-surface' \| 'latent-manifold'` | 3D scientific visualization mode. |
+| `title` | `string` | Figure title. |
+| `subtitle` | `string` | Secondary header text. |
+| `caption` | `string` | Accessible caption below figure. |
+| `height` | `number` | Canvas viewport height in pixels (default: `420`). |
+
+```mdx
+<Plot3D
+  type="loss-surface"
+  title="Figure 1: Non-Convex Cost Landscape with Rollout Geodesics"
+  caption="Drag to orbit; scroll to zoom. Emerald path shows optimal geodesic trajectory."
+  height={440}
+/>
+```
+
+---
+
 ## Interactive Primitives
 
 ### `<Question>`

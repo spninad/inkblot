@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url);
 const archiver = require('archiver');
 import { renderReportToHtml } from '../compiler/render.js';
 import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
+import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
 import type { ThemeConfig } from '../themes/types.js';
 
 export interface BundleOptions {
@@ -95,7 +96,11 @@ export async function bundleReport(options: BundleOptions): Promise<BundleResult
   const indexHtmlFile = path.join(targetDir, 'index.html');
 
   fs.writeFileSync(styleFile, css, 'utf-8');
-  fs.writeFileSync(scriptFile, INKBLOT_CLIENT_SCRIPT, 'utf-8');
+  fs.writeFileSync(
+    scriptFile,
+    `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`,
+    'utf-8'
+  );
 
   const themeName = (typeof options.theme === 'string' ? options.theme : frontmatter.theme) || 'academic';
 

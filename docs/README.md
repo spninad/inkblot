@@ -16,6 +16,8 @@ Inkblot was created to make generating interactive scientific reports lightweigh
 - **Zero-Config Static Hosting**: Static directory output ready for instant deployment to Vercel, S3, Netlify, or Cloudflare Pages with no post-processing.
 - **Self-Contained Standalone Artifacts**: Inlines CSS, KaTeX math stylesheets, semantic SVGs, and client scripts into a single `.html` file.
 - **Scientific Component Primitives**: Pre-built components for dot/forest plots, XY frontier charts, data tables, summary tables, question callouts, asides, glossaries, tabs, and math.
+- **Tufte Visualizations**: Maximize data-ink ratio with embedded word-sized `<Sparkline>` micro-graphics, paired `<Slopegraph>` comparisons, and aligned `<SmallMultiples>`.
+- **Interactive 3D WebGL**: Native Three.js integration (`<Plot3D>`) for interactive loss landscapes, parameter manifolds, and agent trajectory rollouts with orbit drag and zoom.
 - **Configurable Theme Engine**: Built-in `academic`, `modern`, and `classic` themes with automatic or toggleable dark mode support.
 - **Programmatic React / Next.js API**: Full support for Server-Side Rendering (SSR), Static Site Generation (SSG), Incremental Static Regeneration (ISR), and runtime dynamic rendering.
 

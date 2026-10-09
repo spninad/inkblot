@@ -36,8 +36,23 @@ export const INKBLOT_SITE_SCRIPT = `
 
   function loadSearchIndex() {
     if (searchIndex) return Promise.resolve(searchIndex);
-    return fetch('./search-index.json')
-      .then(function(res) { return res.json(); })
+    var script = document.querySelector('script[src*="assets/site.js"]');
+    var base = '';
+    if (script) {
+      var src = script.getAttribute('src') || '';
+      var idx = src.indexOf('assets/site.js');
+      if (idx !== -1) base = src.substring(0, idx);
+    }
+    var target = (base || './') + 'search-index.json';
+    return fetch(target)
+      .then(function(res) { if (!res.ok) throw new Error(res.statusText); return res.json(); })
+      .catch(function() {
+        return fetch('./search-index.json')
+          .then(function(res) { if (!res.ok) throw new Error(res.statusText); return res.json(); })
+          .catch(function() {
+            return fetch('/search-index.json').then(function(r) { return r.json(); });
+          });
+      })
       .then(function(data) { searchIndex = data; return data; })
       .catch(function(e) { console.error('Failed to load search index:', e); return []; });
   }

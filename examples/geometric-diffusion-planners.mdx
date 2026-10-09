@@ -1,0 +1,212 @@
+---
+title: "Riemannian Trajectory Planners: Geometry-Aware Score Guidance in Continuous Action Spaces"
+date: "October 2026"
+abstract: |
+  Autonomous embodied decision-making requires synthesizing kinodynamically feasible trajectories
+  through complex non-convex environments. While standard diffusion planners generate coherent
+  plans in unconstrained Euclidean domains, they routinely violate physical manifolds and obstacle
+  boundaries when projected into task space. In this report, we formulate diffusion trajectory
+  planning over Riemannian manifolds $(\mathcal{M}, g)$ equipped with position-dependent metric
+  tensors induced by obstacle signed distance fields (SDF). We introduce Geodesic Score Guidance (GSG),
+  proving asymptotic convergence to collision-free geodesics under test-time classifier-free guidance.
+  Across continuous manipulation and locomotion benchmarks, our method improves task completion by
+  +28.7% over standard Euclidean diffusion planners while reducing sample variance by 64%.
+theme: "academic"
+---
+
+<Section number="1" title="Introduction & Mathematical Formulation">
+
+Modern trajectory synthesis frames path planning as conditional generation from a learned distribution over continuous trajectories $\boldsymbol{\tau} = (\mathbf{s}_0, \mathbf{a}_0, \mathbf{s}_1, \dots, \mathbf{s}_T) \in \mathcal{T}$. In standard diffusion planning, the forward corruption process is governed by an Ito Stochastic Differential Equation (SDE):
+
+<Equation
+  math="\mathrm{d}\boldsymbol{\tau}_t = \mathbf{f}(\boldsymbol{\tau}_t, t)\,\mathrm{d}t + g(t)\,\mathrm{d}\mathbf{w}_t"
+  display={true}
+  caption="Forward Ito SDE modeling trajectory noise corruption over diffusion time t."
+/>
+
+Reversing this process from pure noise $\boldsymbol{\tau}_1 \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$ to the data distribution $p_0(\boldsymbol{\tau})$ requires evaluating the reverse-time score function:
+
+<Equation
+  math="\mathrm{d}\boldsymbol{\tau}_t = \left[ \mathbf{f}(\boldsymbol{\tau}_t, t) - g(t)^2 \nabla_{\boldsymbol{\tau}_t} \log p_t(\boldsymbol{\tau}_t) \right] \mathrm{d}t + g(t)\,\mathrm{d}\bar{\mathbf{w}}_t"
+  display={true}
+  caption="Reverse-time trajectory generation SDE driven by the marginal score function."
+/>
+
+When applying classifier-free guidance for a task objective $y$ (such as obstacle clearance and target reaching), the guided score decomposes into an unconditional score plus an energy gradient:
+
+<Equation
+  math="\nabla_{\boldsymbol{\tau}_t} \log p_t(\boldsymbol{\tau}_t \mid y) = \nabla_{\boldsymbol{\tau}_t} \log p_t(\boldsymbol{\tau}_t) + \gamma\,\mathbf{G}^{-1}(\boldsymbol{\tau}_t)\,\nabla_{\boldsymbol{\tau}_t} \mathcal{E}(\boldsymbol{\tau}_t, y)"
+  display={true}
+  caption="Riemannian score guidance weighted by the inverse metric tensor G(τ)."
+/>
+
+<Aside type="note" title="Riemannian Metric Tensor Formulation">
+Unlike naive Euclidean gradients that push trajectories straight into narrow bottleneck walls, the metric tensor $\mathbf{G}(\mathbf{s}) = \mathbf{I} + \beta \exp\left(-\frac{\mathrm{SDF}(\mathbf{s})^2}{2\sigma^2}\right) \mathbf{n}\mathbf{n}^\top$ expands space perpendicular to obstacle boundaries, causing guided diffusion paths to bend naturally along geodesic contours.
+</Aside>
+
+</Section>
+
+<Section number="2" title="Interactive 3D Energy Landscape">
+
+Below is an interactive 3D WebGL rendering of the non-convex cost landscape $\mathcal{E}(\mathbf{s})$ parameterized over the robot's primary configuration subspace. Notice how the optimal geodesic trajectory (highlighted in emerald green) curves through the saddle pass toward the global attractor basin, while unguided Euclidean paths (translucent grey) collide with the potential ridge.
+
+<Plot3D
+  type="loss-surface"
+  title="Figure 1: Non-Convex Planning Energy Landscape & Score Rollouts"
+  subtitle="Three-dimensional parametric cost surface with animated score descent trajectories"
+  caption="Rotate by dragging with mouse or touch. Zoom via scroll wheel. The glowing emerald tube depicts the optimal geodesic plan identified by Riemannian score guidance. The translucent grey trajectories depict rejected unconditioned rollouts trapped in local minima."
+  height={440}
+/>
+
+</Section>
+
+<Section number="3" title="Benchmark Performance & Tufte Visualizations">
+
+We benchmark Riemannian Geodesic Guidance (Ours) against four state-of-the-art baselines across five robotic manipulation domains: *Franka-Kitchen*, *PointMaze-Hard*, *RoboDesk-Assemble*, *AntMaze-Dense*, and *Humanoid-Run*.
+
+### 3.1 Task Completion & Denoising Loss Trajectories
+
+The table below summarizes completion rates, inference latency, and the micro-convergence trajectory of the denoising loss across 50 reverse diffusion steps.
+
+<div className="tablewrap">
+<table className="sumtable">
+  <thead>
+    <tr>
+      <th style={{ width: '40px' }}>#</th>
+      <th>Method</th>
+      <th>Manifold Constraint</th>
+      <th className="num">Success (%)</th>
+      <th className="num">Latency (ms)</th>
+      <th style={{ textAlign: 'center' }}>Denoising Loss Trend</th>
+      <th className="num">Δ vs Baseline</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><b>Riemannian GSG (Ours)</b></td>
+      <td>Geodesic Metric $\mathbf{G}(\mathbf{s})$</td>
+      <td className="num"><b>94.2%</b></td>
+      <td className="num"><b>41.8</b></td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[2.84, 2.15, 1.42, 0.88, 0.43, 0.22, 0.11]} color="--s1" highlightLast={true} />
+      </td>
+      <td className="num" style={{ color: 'var(--s1)', fontWeight: 600 }}>+28.7%</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Euclidean Classifier-Free Diffusion</td>
+      <td>Unconstrained $\mathbb{R}^d$</td>
+      <td className="num">65.5%</td>
+      <td className="num">68.2</td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[2.95, 2.45, 1.95, 1.54, 1.25, 0.98, 0.84]} color="--s2" highlightLast={true} />
+      </td>
+      <td className="num" style={{ color: 'var(--muted)' }}>—</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Trajectory Transformer (TT)</td>
+      <td>Autoregressive Beam Search</td>
+      <td className="num">58.1%</td>
+      <td className="num">142.5</td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[3.12, 2.70, 2.10, 1.80, 1.62, 1.45, 1.32]} color="--ink-2" highlightLast={true} />
+      </td>
+      <td className="num" style={{ color: 'var(--s3)' }}>-7.4%</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Model Predictive Path Integral (MPPI)</td>
+      <td>Shooting Method</td>
+      <td className="num">51.4%</td>
+      <td className="num">92.0</td>
+      <td style={{ textAlign: 'center' }}>
+        <Sparkline data={[2.60, 2.45, 2.30, 2.10, 1.95, 1.88, 1.82]} color="--ink-2" highlightLast={true} />
+      </td>
+      <td className="num" style={{ color: 'var(--s3)' }}>-14.1%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<Aside type="tip" title="Tufte Principle: Embedded Micro-Graphics">
+The embedded sparklines above preserve context by nesting the 50-step optimization loss curve directly inside the numerical results table, eliminating the need to look away to an external graphic.
+</Aside>
+
+### 3.2 Paired Adaptation Dynamics: Zero-Shot to Test-Time Guidance
+
+Following Edward Tufte’s slopegraph design, the figure below isolates the performance trajectory for each evaluation environment as test-time Riemannian score adaptation is applied. Direct labels eliminate legend lookups, and tabular figures align precision.
+
+<Slopegraph
+  title="Figure 2: Performance Gains from Test-Time Riemannian Guidance"
+  subtitle="Paired comparison of task success rate before and after test-time manifold score adaptation"
+  leftLabel="Zero-Shot Policy"
+  rightLabel="Riemannian Score Guided"
+  items={[
+    { label: "Franka-Kitchen", leftVal: 0.624, rightVal: 0.968, highlight: true },
+    { label: "PointMaze-Hard", leftVal: 0.481, rightVal: 0.942, highlight: true },
+    { label: "RoboDesk-Assemble", leftVal: 0.553, rightVal: 0.915, highlight: true },
+    { label: "AntMaze-Dense", leftVal: 0.412, rightVal: 0.884 },
+    { label: "Humanoid-Run", leftVal: 0.380, rightVal: 0.792 },
+  ]}
+/>
+
+### 3.3 Multi-Seed Stability across Environments
+
+To guarantee that our findings are not artifacts of lucky environmental random seeds, we evaluate 6 distinct random seeds with identical hyperparameters. Tufte small multiples share uniform horizontal and vertical axes to allow immediate across-seed visual comparison.
+
+<SmallMultiples
+  title="Figure 3: Seed Stability across 6 Random Environmental Initializations"
+  subtitle="Denoising loss curves across 50 diffusion steps for independent seeds (normalized scale: [0.0, 3.0])"
+  yMin={0.0}
+  yMax={3.0}
+  panels={[
+    { title: "Seed 42", subtitle: "Kitchen", data: [2.8, 2.0, 1.3, 0.7, 0.3, 0.12], highlight: true },
+    { title: "Seed 101", subtitle: "Maze", data: [2.9, 2.1, 1.4, 0.8, 0.35, 0.14], highlight: true },
+    { title: "Seed 256", subtitle: "Desk", data: [2.7, 1.9, 1.2, 0.65, 0.28, 0.10], highlight: true },
+    { title: "Seed 512", subtitle: "Ant", data: [2.85, 2.15, 1.45, 0.82, 0.38, 0.16] },
+    { title: "Seed 1024", subtitle: "Humanoid", data: [3.0, 2.3, 1.6, 0.95, 0.48, 0.21] },
+    { title: "Seed 2048", subtitle: "General", data: [2.75, 1.95, 1.28, 0.72, 0.31, 0.13] },
+  ]}
+/>
+
+</Section>
+
+<Section number="4" title="Theoretical Analysis & Proof Sketch">
+
+<Collapse title="Theorem 1: Convergence of Geodesic Score Matching (Click to expand derivation)">
+
+Let $\mathcal{M}$ be a complete Riemannian manifold with metric tensor $g$, and let $\Delta_g = \mathrm{div}_g \circ \mathrm{grad}_g$ denote the Laplace-Beltrami operator. Under heat kernel smoothing $p_t(\mathbf{x} \mid \mathbf{x}_0) = (4\pi t)^{-d/2} \exp\left(-\frac{d_g^2(\mathbf{x}, \mathbf{x}_0)}{4t}\right) \left(1 + \mathcal{O}(t)\right)$, the drift of the reverse diffusion process satisfies:
+
+<Equation
+  math="\lim_{t \to 0} 2t\,\nabla_g \log p_t(\mathbf{x} \mid \mathbf{x}_0) = -\mathrm{grad}_g d_g^2(\mathbf{x}, \mathbf{x}_0) = -2\,\exp_{\mathbf{x}}^{-1}(\mathbf{x}_0)"
+  display={true}
+  caption="Infinitesimal generator of reverse geodesic drift towards data manifold."
+/>
+
+Hence, score-based sampling under metric $g$ flows along the unique minimal geodesic connecting the perturbed sample to the optimal path target $\mathbf{x}_0$, terminating on the obstacle-free manifold with probability 1. $\blacksquare$
+
+</Collapse>
+
+<Question title="Frequently Asked Questions">
+
+**Q: Does evaluating the Riemannian metric tensor add substantial computational overhead?**  
+A: No. We represent the metric tensor as a low-rank Perturbation $\mathbf{I} + \mathbf{u}\mathbf{u}^\top$ derived from an analytic neural SDF. Computing the matrix inverse $\mathbf{G}^{-1}$ via the Sherman-Morrison formula requires only $\mathcal{O}(d)$ vector operations, preserving 41.8 ms end-to-end planning latency.
+
+**Q: Can this method handle dynamic obstacles with moving velocity vectors?**  
+A: Yes. In spacetime manifolds $\mathcal{M} \times \mathbb{R}$, dynamic obstacles induce non-holonomic velocity constraints encoded directly in the Christoffel connection symbols $\Gamma^k_{ij}$.
+
+</Question>
+
+</Section>
+
+<Section number="5" title="Summary & Artifacts">
+
+Riemannian score guidance bridges geometric mechanics with diffusion generative modeling. The full implementation, checkpoint weights, and interactive WebGL environments are packaged within Inkblot.
+
+<Aside type="important" title="Reproducibility & Code Availability">
+All benchmarks in this report were verified using deterministic random seeds and compiled into standalone HTML using Inkblot's static bundler.
+</Aside>
+
+</Section>
