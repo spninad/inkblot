@@ -53,7 +53,22 @@ export function getKatexCss(): string {
 
   for (const c of candidates) {
     if (fs.existsSync(c)) {
-      cachedKatexCss = fs.readFileSync(c, 'utf-8');
+      let raw = fs.readFileSync(c, 'utf-8');
+      // Rewrite relative font URLs to CDN so authentic KaTeX LaTeX serif math fonts load reliably
+      // in standalone single HTML files, site subdirectories, and web apps.
+      raw = raw.replace(/url\(fonts\//g, 'url(https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/fonts/');
+
+      // Ensure explicit serif fallbacks for math glyphs so math never renders in sans-serif
+      const serifFallbacks = `
+/* KaTeX LaTeX Serif Math Fallbacks */
+.katex { font-family: KaTeX_Main, "Times New Roman", serif; }
+.katex .mathnormal { font-family: KaTeX_Math, "Times New Roman", serif; font-style: italic; }
+.katex .mathbf { font-family: KaTeX_Main, "Times New Roman", serif; font-weight: bold; }
+.katex .mathit { font-family: KaTeX_Main, "Times New Roman", serif; font-style: italic; }
+.katex .mathrm { font-family: KaTeX_Main, "Times New Roman", serif; font-style: normal; }
+.katex .amsrm { font-family: KaTeX_AMS, "Times New Roman", serif; }
+`;
+      cachedKatexCss = `${raw}\n${serifFallbacks}`;
       return cachedKatexCss;
     }
   }
