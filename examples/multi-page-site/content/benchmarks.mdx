@@ -1,0 +1,24 @@
+---
+title: "Benchmark Comparisons"
+date: "October 2026"
+abstract: |
+  Trade-off frontiers and computational evaluation comparing learned MPC against
+  directly trained policies.
+---
+
+<Section number="1" title="Computational Frontier">
+
+<Figure id="fig-frontier" title="Figure 1. Predictor step savings frontier.">
+  <XYPlot
+    x={{ min: 0, max: 70, ticks: [0, 20, 40, 60], format: "percent", label: "Predictor steps saved" }}
+    y={{ min: 0, max: 100, ticks: [0, 25, 50, 75, 100], format: "percent", label: "Batches with exact elite" }}
+    points={[
+      { x: 0, y: 100, name: "Budget 200", label: "budget 200" },
+      { x: 16, y: 17.4, name: "Budget 160", label: "160" },
+      { x: 32, y: 5.8, name: "Budget 120", label: "120" }
+    ]}
+    showDataTable={true}
+  />
+</Figure>
+
+</Section>

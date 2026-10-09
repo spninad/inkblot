@@ -95,6 +95,38 @@ inkblot dev <input> [options]
 
 ---
 
+### `inkblot site` (Hugo-like Multi-Page Sites)
+
+Commands for building and serving multi-page report collections and publication portals configured via `inkblot.config.ts`.
+
+#### `inkblot site init [dir]`
+Scaffolds a new multi-page report site with sample configuration and MDX reports:
+```bash
+inkblot site init my-reports
+```
+
+#### `inkblot site build`
+Compiles all MDX pages in `content/` to static HTML inside `dist/`:
+```bash
+inkblot site build
+# Or with custom config:
+inkblot site build -c custom.config.ts -o output/
+```
+
+#### `inkblot site dev`
+Starts local development server with on-demand SSR and live reloading:
+```bash
+inkblot site dev -p 3000
+```
+
+#### `inkblot site serve`
+Serves the built production static site:
+```bash
+inkblot site serve -o dist -p 3000
+```
+
+---
+
 ## Deployment Recipes
 
 ### Deploying to Vercel

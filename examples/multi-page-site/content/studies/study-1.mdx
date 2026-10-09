@@ -1,0 +1,33 @@
+---
+title: "Study 1: Planning-Aware Test-Time Adaptation"
+date: "October 2026"
+abstract: |
+  Investigating whether weighting world model updates by their relevance to the
+  planner improves decision quality after test-time dynamics change.
+---
+
+<Section number="1" title="Introduction">
+
+<Question>
+Does weighting model updates by planning sensitivity outperform standard test-time adaptation?
+</Question>
+
+<Aside title="Key Finding">
+Under pre-registered success criteria, planning sensitivity showed equivalent performance
+to standard adaptation across six perturbation regimes.
+</Aside>
+
+<Figure id="fig-study1" title="Figure 1. Success rate across dynamics shifts.">
+  <DotPlot
+    rows={['Default', 'Damping ×5', 'Damping ×10', 'Mass ×0.2']}
+    x={{ min: 0, max: 1, ticks: [0, 0.25, 0.5, 0.75, 1], format: "percent" }}
+    series={[
+      { name: "No Adaptation", color: "--s0", values: [0.867, 0.883, 0.867, 0.217] },
+      { name: "Standard", color: "--s1", values: [0.883, 0.883, 0.867, 0.183] }
+    ]}
+    legend={true}
+    showDataTable={true}
+  />
+</Figure>
+
+</Section>

@@ -11,7 +11,8 @@ Inkblot is both a **reusable library** and a **command-line tool** for authoring
 ## Highlights
 
 - 📄 **Static Output by Default**: Produces standalone single-file HTML reports (with CSS, math, and SVGs embedded), static web directories ready for Vercel/S3, or ZIP archives.
-- ⚛️ **Programmatic Web App API**: Render reports directly inside Next.js (SSR, SSG, ISR) or React applications.
+- 🌐 **Hugo-like Multi-Page Site Engine**: Build complete report sites and documentation portals with `inkblot.config.ts`, file-system routing, global navigation, sidebars, search index, and on-demand SSR.
+- ⚛️ **Next.js Adapter & React API**: Mount full report sites or individual documents in Next.js App Router (`inkblot/next`) with SSR, SSG, or ISR.
 - 📊 **Scientific Primitives**: Pre-built components for Dot/Forest plots with 95% confidence intervals, XY trade-off frontiers, data tables, summary tables, question callouts, asides, glossaries, and KaTeX math.
 - 🎨 **Configurable Themes**: Beautiful typography inspired by academic monographs (*Literata* + *Inter*), plus modern sans and classic LaTeX themes with light and dark mode.
 - ⚡ **Zero-Runtime SVG Charts**: Semantic SVG charts rendered on the server with interactive tooltips and accessible data table toggles.
@@ -20,19 +21,25 @@ Inkblot is both a **reusable library** and a **command-line tool** for authoring
 
 ## Quickstart
 
+### 1. Single Report
 ```bash
-# 1. Install
-bun add inkblot
-# or: npm install inkblot
-
-# 2. Build a standalone single-file HTML report
+# Build standalone single-file HTML report
 inkblot build report.mdx
 
-# 3. Generate a static directory deployable directly to Vercel or S3
-inkblot build report.mdx --format dir -o dist/ --zip
-
-# 4. Run local preview with live reload
+# Live preview
 inkblot dev report.mdx --port 3000
+```
+
+### 2. Multi-Page Site (Hugo-like)
+```bash
+# Scaffold a new multi-page report site
+inkblot site init my-site
+
+# Start dev server with on-demand SSR & live reload
+inkblot site dev
+
+# Build static production site to dist/
+inkblot site build
 ```
 
 ---

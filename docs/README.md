@@ -24,7 +24,8 @@ Inkblot was created to make generating interactive scientific reports lightweigh
 ## Documentation Index
 
 - [Quickstart & Tutorial](./quickstart.md) - Build your first scientific report in 5 minutes.
-- [CLI Reference](./cli.md) - Complete documentation for `inkblot build` and `inkblot dev`.
+- [Multi-Page Site Engine (Hugo-like)](./site.md) - Build multi-page publication portals and documentation sites with config files, routing, search, and Next.js.
+- [CLI Reference](./cli.md) - Complete documentation for `inkblot build`, `inkblot dev`, and `inkblot site`.
 - [Programmatic API](./api.md) - Using Inkblot in Next.js, Remix, and React web apps.
 - [Component Catalog](./components.md) - Props and usage examples for all scientific report components.
 - [Theme Engine & Styling](./themes.md) - Customizing CSS variables, dark mode, and custom themes.
