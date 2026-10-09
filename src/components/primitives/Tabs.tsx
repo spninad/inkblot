@@ -93,7 +93,8 @@ export const Tab: React.FC<TabProps> = ({ children }) => {
 };
 
 export interface CollapseProps {
-  summary: React.ReactNode;
+  summary?: React.ReactNode;
+  title?: React.ReactNode;
   open?: boolean;
   children: React.ReactNode;
   className?: string;
@@ -101,13 +102,15 @@ export interface CollapseProps {
 
 export const Collapse: React.FC<CollapseProps> = ({
   summary,
+  title,
   open = false,
   children,
   className = '',
 }) => {
+  const displaySummary = summary ?? title ?? 'Details';
   return (
     <details className={`inkblot-collapse ${className}`.trim()} open={open}>
-      <summary>{summary}</summary>
+      <summary>{displaySummary}</summary>
       <div className="inkblot-collapse-content">{children}</div>
     </details>
   );
