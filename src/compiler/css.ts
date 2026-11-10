@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getTheme, generateThemeCssVariables } from '../themes/index.js';
+import {
+  getTheme,
+  generateThemeCssVariables,
+  getBuiltinThemeCss,
+  getBuiltinThemes,
+} from '../themes/index.js';
 import type { ThemeConfig } from '../themes/types.js';
 
 let cachedBaseCss: string | null = null;
@@ -50,6 +55,7 @@ export function getBaseInkblotCss(): string {
   if (cachedBaseCss) return cachedBaseCss;
 
   const candidates = [
+    resolvePackageFile('dist/base.css'),
     resolvePackageFile('src/themes/styles/inkblot.css'),
     resolvePackageFile('dist/style.css'),
     resolvePackageFile('../themes/styles/inkblot.css'),
@@ -71,6 +77,7 @@ export function getSiteCss(): string {
   if (cachedSiteCss) return cachedSiteCss;
 
   const candidates = [
+    resolvePackageFile('dist/site.css'),
     resolvePackageFile('src/themes/styles/site.css'),
     resolvePackageFile('dist/site.css'),
     resolvePackageFile('../themes/styles/site.css'),
@@ -100,7 +107,10 @@ export function getKatexCss(): string {
       let raw = fs.readFileSync(c, 'utf-8');
       // Rewrite relative font URLs to CDN so authentic KaTeX LaTeX serif math fonts load reliably
       // in standalone single HTML files, site subdirectories, and web apps.
-      raw = raw.replace(/url\(fonts\//g, 'url(https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/fonts/');
+      raw = raw.replace(
+        /url\(fonts\//g,
+        'url(https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/fonts/',
+      );
 
       // Ensure explicit serif fallbacks for math glyphs so math never renders in sans-serif
       const serifFallbacks = `
@@ -120,11 +130,30 @@ export function getKatexCss(): string {
   return '';
 }
 
-export function getFullReportCss(themeInput?: string | ThemeConfig): string {
+export function getFullReportCss(
+  themeInput?: string | ThemeConfig,
+  additionalThemes: string[] = [],
+): string {
   const theme = getTheme(themeInput);
   const themeVars = generateThemeCssVariables(theme);
   const baseCss = getBaseInkblotCss();
   const katexCss = getKatexCss();
 
-  return [themeVars, baseCss, katexCss].filter(Boolean).join('\n\n');
+  return [
+    baseCss,
+    getBuiltinThemeCss(),
+    ...additionalThemes
+      .filter((name) => getBuiltinThemes().find((t) => t.name === name) !== getTheme(name))
+      .map((name) => generateThemeCssVariables(getTheme(name), false)),
+    themeVars,
+    katexCss,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+export function getBrowserScript(): string {
+  return fs
+    .readFileSync(resolvePackageFile('dist/interactive.js'), 'utf8')
+    .replace(/<\/script/gi, '<\\/script');
 }

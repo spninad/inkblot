@@ -10,9 +10,12 @@ export const INKBLOT_THREE_SCRIPT = `
     if (!containers.length) return;
 
     if (typeof window.THREE === 'undefined') {
+      if (document.querySelector('script[data-inkblot-three]')) return;
       var script = document.createElement('script');
+      script.setAttribute('data-inkblot-three', '');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
       script.onload = function() { initAllScenes(); };
+      script.onerror = function() { document.querySelectorAll('.inkblot-3d-fallback').forEach(function(n) { n.textContent = '3D preview unavailable. Check your connection and reload.'; }); };
       document.head.appendChild(script);
     } else {
       initAllScenes();
@@ -25,11 +28,13 @@ export const INKBLOT_THREE_SCRIPT = `
       if (wrap._threeInit) return;
       wrap._threeInit = true;
       var type = wrap.getAttribute('data-plot3d');
+      try {
       if (type === 'latent-manifold') {
         renderLatentManifold(wrap);
       } else {
         renderLossSurface(wrap);
       }
+      } catch(e) { var fallback = wrap.querySelector('.inkblot-3d-fallback'); if (fallback) { fallback.style.display = 'flex'; fallback.textContent = '3D preview unavailable in this browser.'; } }
     });
   }
 
@@ -137,7 +142,15 @@ export const INKBLOT_THREE_SCRIPT = `
     var isDragging = false;
     var prevMouse = { x: 0, y: 0 };
     var spherical = { radius: 46, theta: 0.7, phi: 1.1 };
-    var autoRotate = true;
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var autoRotate = !reducedMotion.matches;
+    var events = new AbortController();
+    function listen(target, type, listener, options) { target.addEventListener(type, listener, Object.assign({}, options, { signal: events.signal })); }
+    var visible = true;
+    var visibilityObserver = new IntersectionObserver(function(entries) { visible = entries[0].isIntersecting; });
+    visibilityObserver.observe(wrap);
+    var sizeObserver = new ResizeObserver(function() { var w = wrap.clientWidth, h = wrap.clientHeight; if (w && h) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } });
+    sizeObserver.observe(wrap);
 
     function updateCamera() {
       camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
@@ -148,11 +161,11 @@ export const INKBLOT_THREE_SCRIPT = `
     updateCamera();
 
     // Mouse drag controls
-    renderer.domElement.addEventListener('pointerdown', function(e) {
+    listen(renderer.domElement, 'pointerdown', function(e) {
       isDragging = true;
       prevMouse = { x: e.clientX, y: e.clientY };
     });
-    window.addEventListener('pointermove', function(e) {
+    listen(window, 'pointermove', function(e) {
       if (!isDragging) return;
       var dx = e.clientX - prevMouse.x;
       var dy = e.clientY - prevMouse.y;
@@ -161,10 +174,12 @@ export const INKBLOT_THREE_SCRIPT = `
       spherical.phi = Math.max(0.2, Math.min(Math.PI / 2 - 0.05, spherical.phi - dy * 0.008));
       updateCamera();
     });
-    window.addEventListener('pointerup', function() { isDragging = false; });
+    listen(window, 'pointerup', function() { isDragging = false; });
+    listen(window, 'pointercancel', function() { isDragging = false; });
 
     // Wheel zoom
-    renderer.domElement.addEventListener('wheel', function(e) {
+    listen(renderer.domElement, 'wheel', function(e) {
+      if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
       spherical.radius = Math.max(15, Math.min(90, spherical.radius + e.deltaY * 0.05));
       updateCamera();
@@ -172,9 +187,12 @@ export const INKBLOT_THREE_SCRIPT = `
 
     // Buttons
     var rotBtn = wrap.querySelector('[data-3d-action="rotate"]');
-    if (rotBtn) rotBtn.addEventListener('click', function() { autoRotate = !autoRotate; });
+    function syncRotation() { if (rotBtn) rotBtn.setAttribute('aria-pressed', String(autoRotate)); }
+    syncRotation();
+    listen(reducedMotion, 'change', function() { autoRotate = !reducedMotion.matches; syncRotation(); });
+    if (rotBtn) listen(rotBtn, 'click', function() { autoRotate = !autoRotate; syncRotation(); });
     var resetBtn = wrap.querySelector('[data-3d-action="reset"]');
-    if (resetBtn) resetBtn.addEventListener('click', function() {
+    if (resetBtn) listen(resetBtn, 'click', function() {
       spherical = { radius: 46, theta: 0.7, phi: 1.1 };
       updateCamera();
     });
@@ -182,8 +200,14 @@ export const INKBLOT_THREE_SCRIPT = `
     // Animation loop
     var t = 0;
     function animate() {
+      if (!wrap.isConnected) {
+        events.abort(); visibilityObserver.disconnect(); sizeObserver.disconnect();
+        scene.traverse(function(node) { if (node.geometry) node.geometry.dispose(); if (node.material) { var materials = Array.isArray(node.material) ? node.material : [node.material]; materials.forEach(function(m) { m.dispose(); }); } });
+        renderer.dispose(); return;
+      }
       requestAnimationFrame(animate);
-      t += 0.006;
+      if (!visible || document.hidden) return;
+      if (autoRotate) t += 0.006;
       if (autoRotate && !isDragging) {
         spherical.theta += 0.003;
         updateCamera();
@@ -195,7 +219,7 @@ export const INKBLOT_THREE_SCRIPT = `
     }
     animate();
 
-    window.addEventListener('resize', function() {
+    listen(window, 'resize', function() {
       var nw = wrap.clientWidth;
       var nh = wrap.clientHeight;
       if (nw && nh) {
@@ -260,7 +284,15 @@ export const INKBLOT_THREE_SCRIPT = `
     var isDragging = false;
     var prevMouse = { x: 0, y: 0 };
     var spherical = { radius: 38, theta: 0.2, phi: 1.2 };
-    var autoRotate = true;
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var autoRotate = !reducedMotion.matches;
+    var events = new AbortController();
+    function listen(target, type, listener, options) { target.addEventListener(type, listener, Object.assign({}, options, { signal: events.signal })); }
+    var visible = true;
+    var visibilityObserver = new IntersectionObserver(function(entries) { visible = entries[0].isIntersecting; });
+    visibilityObserver.observe(wrap);
+    var sizeObserver = new ResizeObserver(function() { var w = wrap.clientWidth, h = wrap.clientHeight; if (w && h) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } });
+    sizeObserver.observe(wrap);
 
     function updateCamera() {
       camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
@@ -270,11 +302,11 @@ export const INKBLOT_THREE_SCRIPT = `
     }
     updateCamera();
 
-    renderer.domElement.addEventListener('pointerdown', function(e) {
+    listen(renderer.domElement, 'pointerdown', function(e) {
       isDragging = true;
       prevMouse = { x: e.clientX, y: e.clientY };
     });
-    window.addEventListener('pointermove', function(e) {
+    listen(window, 'pointermove', function(e) {
       if (!isDragging) return;
       var dx = e.clientX - prevMouse.x;
       var dy = e.clientY - prevMouse.y;
@@ -283,16 +315,32 @@ export const INKBLOT_THREE_SCRIPT = `
       spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi - dy * 0.008));
       updateCamera();
     });
-    window.addEventListener('pointerup', function() { isDragging = false; });
+    listen(window, 'pointerup', function() { isDragging = false; });
+    listen(window, 'pointercancel', function() { isDragging = false; });
 
-    renderer.domElement.addEventListener('wheel', function(e) {
+    listen(renderer.domElement, 'wheel', function(e) {
+      if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
       spherical.radius = Math.max(12, Math.min(70, spherical.radius + e.deltaY * 0.05));
       updateCamera();
     }, { passive: false });
 
+    var rotBtn = wrap.querySelector('[data-3d-action="rotate"]');
+    function syncRotation() { if (rotBtn) rotBtn.setAttribute('aria-pressed', String(autoRotate)); }
+    syncRotation();
+    listen(reducedMotion, 'change', function() { autoRotate = !reducedMotion.matches; syncRotation(); });
+    if (rotBtn) listen(rotBtn, 'click', function() { autoRotate = !autoRotate; syncRotation(); });
+    var resetBtn = wrap.querySelector('[data-3d-action="reset"]');
+    if (resetBtn) listen(resetBtn, 'click', function() { spherical = { radius: 38, theta: 0.2, phi: 1.2 }; updateCamera(); });
+
     function animate() {
+      if (!wrap.isConnected) {
+        events.abort(); visibilityObserver.disconnect(); sizeObserver.disconnect();
+        scene.traverse(function(node) { if (node.geometry) node.geometry.dispose(); if (node.material) { var materials = Array.isArray(node.material) ? node.material : [node.material]; materials.forEach(function(m) { m.dispose(); }); } });
+        renderer.dispose(); return;
+      }
       requestAnimationFrame(animate);
+      if (!visible || document.hidden) return;
       if (autoRotate && !isDragging) {
         spherical.theta += 0.002;
         updateCamera();
@@ -302,6 +350,7 @@ export const INKBLOT_THREE_SCRIPT = `
     animate();
   }
 
+  document.addEventListener('inkblot:content-ready', init3DPlots);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init3DPlots);
   } else {

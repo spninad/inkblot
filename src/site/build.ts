@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderStaticPage } from '../interactive/static.js';
 import { run } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
 import { loadSiteConfig } from './config.js';
@@ -10,11 +9,8 @@ import { discoverSitePages } from './content.js';
 import { SiteLayout } from './layout/SiteLayout.js';
 import { Report } from '../components/layout/Report.js';
 import { defaultComponents } from '../components/index.js';
-import { getTheme, getFontHeadTags } from '../themes/index.js';
-import { getFullReportCss, getSiteCss } from '../compiler/css.js';
-import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
-import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
-import { INKBLOT_SITE_SCRIPT } from './runtime.js';
+import { getTheme, getFontHeadTags, resolveAppearance, appearanceInit } from '../themes/index.js';
+import { getFullReportCss, getSiteCss, getBrowserScript } from '../compiler/css.js';
 import type { SiteConfig, SitePage, SidebarSection } from './types.js';
 
 function copyDirRecursive(src: string, dest: string) {
@@ -76,24 +72,30 @@ export async function buildSite(options: BuildSiteOptions = {}): Promise<BuildSi
 
   // 2. Generate Combined Stylesheet
   const theme = getTheme(config.theme || 'academic');
-  const baseReportCss = getFullReportCss(theme);
+  const appearance = resolveAppearance(theme, config.themePicker, config.basePath || '/');
+  const baseReportCss = getFullReportCss(
+    theme,
+    appearance.themes.map((t) => t.name),
+  );
   const siteCss = getSiteCss();
   const fullCss = `${baseReportCss}\n\n${siteCss}`;
 
   fs.writeFileSync(path.join(assetsDir, 'site.css'), fullCss, 'utf-8');
 
   // 3. Generate Client Scripts
-  const combinedJs = `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_SITE_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`;
+  const combinedJs = getBrowserScript();
   fs.writeFileSync(path.join(assetsDir, 'site.js'), combinedJs, 'utf-8');
 
   // 4. Generate Search Index JSON
   fs.writeFileSync(
     path.join(outDir, 'search-index.json'),
     JSON.stringify(searchIndex, null, 2),
-    'utf-8'
+    'utf-8',
   );
 
-  const fontTags = getFontHeadTags(theme.name);
+  const fontTags = getFontHeadTags(
+    appearance.themes.length ? appearance.themes.map((t) => t.name) : theme.name,
+  );
 
   // 5. Render Each Page
   for (const page of pages) {
@@ -126,8 +128,9 @@ export async function buildSite(options: BuildSiteOptions = {}): Promise<BuildSi
         abstract: page.frontmatter.abstract,
         toc: page.toc,
         theme: theme.name,
+        embedded: true,
       },
-      React.createElement(MDXContent, { components: defaultComponents })
+      React.createElement(MDXContent, { components: defaultComponents }),
     );
 
     const siteElement = React.createElement(
@@ -138,17 +141,18 @@ export async function buildSite(options: BuildSiteOptions = {}): Promise<BuildSi
         sidebar,
         basePath: config.basePath || '/',
       },
-      reportElement
+      reportElement,
     );
 
-    const bodyHtml = renderToStaticMarkup(siteElement);
+    const bodyHtml = renderStaticPage(siteElement);
 
     const pageHtml = `<!doctype html>
-<html lang="en" data-theme="${theme.name}">
+<html lang="en" class="inkblot-root" data-inkblot-root data-inkblot-generated data-theme="${theme.name}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${page.frontmatter.title ? `${page.frontmatter.title} | ${config.title}` : config.title}</title>
+  <script>${appearanceInit(appearance)}</script>
   ${fontTags}
   <link rel="stylesheet" href="${assetPrefix}assets/site.css">
 </head>

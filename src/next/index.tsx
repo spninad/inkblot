@@ -1,14 +1,77 @@
 import React from 'react';
 import { run } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
-import { loadSiteConfig } from '../site/config.js';
 import { discoverSitePages } from '../site/content.js';
-import { SiteLayout } from '../site/layout/SiteLayout.js';
-import { Report } from '../components/layout/Report.js';
-import { defaultComponents } from '../components/index.js';
+import {
+  SiteView as SiteLayout,
+  ReportLayout as Report,
+  Tabs,
+  Tab,
+  Collapse,
+  Plot3D,
+} from 'inkblot/client';
+import { Section, Subsection } from '../components/layout/Section.js';
+import { Abstract } from '../components/layout/Abstract.js';
+import { Table } from '../components/data/Table.js';
+import {
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '../ui/table.js';
+import { SummaryTable } from '../components/data/SummaryTable.js';
+import { Aside } from '../components/primitives/Aside.js';
+import { Question } from '../components/primitives/Question.js';
+import { Glossary, GlossaryItem } from '../components/primitives/Glossary.js';
+import { Figure } from '../components/charts/Figure.js';
+import { DotPlot } from '../components/charts/DotPlot.js';
+import { XYPlot } from '../components/charts/XYPlot.js';
+import { Diagram } from '../components/charts/Diagram.js';
+import { Sparkline } from '../components/charts/Sparkline.js';
+import { Slopegraph } from '../components/charts/Slopegraph.js';
+import { SmallMultiples } from '../components/charts/SmallMultiples.js';
+import { Equation } from '../components/math/Equation.js';
 import { getTheme } from '../themes/index.js';
 import { compileReport } from '../compiler/compile.js';
-import type { SiteConfig, SitePage } from '../site/types.js';
+import type { SiteConfig } from '../site/types.js';
+
+// Interactive references cross the explicit client boundary; scientific rendering stays on the server.
+const nextComponents = {
+  Report,
+  Section,
+  Subsection,
+  Abstract,
+  Table,
+  SummaryTable,
+  Aside,
+  Callout: Aside,
+  Question,
+  Glossary,
+  GlossaryItem,
+  Tabs,
+  Tab,
+  Collapse,
+  Figure,
+  DotPlot,
+  XYPlot,
+  Diagram,
+  Sparkline,
+  Slopegraph,
+  SmallMultiples,
+  Plot3D,
+  Equation,
+  Math: Equation,
+  table: Table,
+  thead: TableHeader,
+  tbody: TableBody,
+  tr: TableRow,
+  th: TableHead,
+  td: TableCell,
+  caption: TableCaption,
+  blockquote: Question,
+};
 
 export interface NextInkblotOptions {
   config: SiteConfig;
@@ -65,7 +128,9 @@ export function createNextInkblotSite(options: NextInkblotOptions) {
         return (
           <div style={{ padding: '40px', fontFamily: 'system-ui' }}>
             <h2>404 - Report Not Found</h2>
-            <p>No report exists for route: <code>/{slugStr}</code></p>
+            <p>
+              No report exists for route: <code>/{slugStr}</code>
+            </p>
           </div>
         );
       }
@@ -82,17 +147,13 @@ export function createNextInkblotSite(options: NextInkblotOptions) {
           abstract: page.frontmatter.abstract,
           toc: page.toc,
           theme: theme.name,
+          embedded: true,
         },
-        React.createElement(MDXContent, { components: defaultComponents })
+        React.createElement(MDXContent, { components: nextComponents }),
       );
 
       return (
-        <SiteLayout
-          config={config}
-          page={page}
-          sidebar={sidebar}
-          basePath={basePath}
-        >
+        <SiteLayout config={config} page={page} sidebar={sidebar} basePath={basePath}>
           {reportElement}
         </SiteLayout>
       );

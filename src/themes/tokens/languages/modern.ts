@@ -1,0 +1,107 @@
+import type { LanguageTokens } from '../types'
+import { tone } from '../util'
+
+/** Modern — quiet, confident, consumer. Ink on white, one warm signal, depth that is felt rather than seen. */
+export const modern: LanguageTokens = {
+  id: 'modern',
+  name: 'Modern',
+  tagline: 'Quiet confidence. Ink, air, and one warm signal.',
+  fonts: {
+    sans: { family: 'Inter Variable', stack: "'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif" },
+    display: { family: 'Inter Variable', stack: "'Inter Variable', 'Inter', system-ui, sans-serif" },
+    serif: { family: 'Inter Variable', stack: "'Inter Variable', system-ui, sans-serif" },
+    mono: { family: 'Geist Mono Variable', stack: "'Geist Mono Variable', ui-monospace, monospace" },
+    hand: { family: 'Inter Variable', stack: "'Inter Variable', system-ui, sans-serif" },
+  },
+  nativeFonts: {
+    sans: { 400: 'Inter_400Regular', 500: 'Inter_500Medium', 600: 'Inter_600SemiBold', 700: 'Inter_700Bold' },
+    display: { 400: 'Inter_400Regular', 500: 'Inter_500Medium', 600: 'Inter_600SemiBold', 700: 'Inter_700Bold' },
+    serif: { 400: 'Inter_400Regular', 500: 'Inter_500Medium', 600: 'Inter_600SemiBold', 700: 'Inter_700Bold' },
+    mono: { 400: 'GeistMono_400Regular', 500: 'GeistMono_500Medium', 600: 'GeistMono_600SemiBold', 700: 'GeistMono_700Bold' },
+    hand: { 400: 'Inter_400Regular', 500: 'Inter_500Medium', 600: 'Inter_600SemiBold', 700: 'Inter_700Bold' },
+  },
+  type: {
+    display: { font: 'display', size: 52, line: 54, weight: 600, tracking: -0.035 },
+    h1: { font: 'display', size: 34, line: 38, weight: 600, tracking: -0.028 },
+    h2: { font: 'display', size: 24, line: 30, weight: 600, tracking: -0.02 },
+    h3: { font: 'sans', size: 18, line: 24, weight: 600, tracking: -0.012 },
+    bodyLg: { font: 'sans', size: 17, line: 26, weight: 400, tracking: -0.005 },
+    body: { font: 'sans', size: 15, line: 23, weight: 400, tracking: -0.003 },
+    bodySm: { font: 'sans', size: 13, line: 19, weight: 400, tracking: 0 },
+    label: { font: 'sans', size: 14, line: 18, weight: 600, tracking: -0.003 },
+    caption: { font: 'sans', size: 12, line: 16, weight: 500, tracking: 0.005 },
+    mono: { font: 'mono', size: 13, line: 18, weight: 400, tracking: 0 },
+    note: { font: 'sans', size: 13, line: 18, weight: 500, tracking: 0 },
+  },
+  space: [0, 2, 4, 8, 12, 16, 20, 24, 32, 48, 64, 96],
+  control: { sm: 34, md: 44, lg: 56 },
+  radius: { control: 12, card: 20, sheet: 28, chip: 999, bullet: 999 },
+  border: { hairline: 1, control: 1, strong: 2 },
+  focus: { width: 2, offset: 2 },
+  motion: {
+    fast: 120, base: 200, slow: 320,
+    ease: 'cubic-bezier(0.32, 0.72, 0, 1)', enter: 'cubic-bezier(0.16, 1, 0.3, 1)', exit: 'cubic-bezier(0.4, 0, 1, 1)',
+    spring: 'cubic-bezier(0.32, 1.2, 0.5, 1)',
+  },
+  icon: { stroke: 1.75, cap: 'round', size: { sm: 16, md: 20, lg: 28 } },
+  elevation: {
+    light: {
+      0: [],
+      1: [{ x: 0, y: 0, blur: 0, spread: 1, color: 'rgba(0,0,0,0.05)' }, { x: 0, y: 2, blur: 6, spread: 0, color: 'rgba(0,0,0,0.05)' }],
+      2: [{ x: 0, y: 0, blur: 0, spread: 1, color: 'rgba(0,0,0,0.04)' }, { x: 0, y: 4, blur: 12, spread: 0, color: 'rgba(0,0,0,0.06)' }, { x: 0, y: 16, blur: 32, spread: -8, color: 'rgba(0,0,0,0.12)' }],
+      3: [{ x: 0, y: 0, blur: 0, spread: 1, color: 'rgba(0,0,0,0.05)' }, { x: 0, y: 8, blur: 24, spread: 0, color: 'rgba(0,0,0,0.08)' }, { x: 0, y: 32, blur: 72, spread: -12, color: 'rgba(0,0,0,0.22)' }],
+    },
+    dark: {
+      0: [],
+      1: [{ x: 0, y: 0, blur: 0, spread: 1, color: 'rgba(255,255,255,0.06)' }],
+      2: [{ x: 0, y: 0, blur: 0, spread: 1, color: 'rgba(255,255,255,0.07)' }, { x: 0, y: 12, blur: 32, spread: -8, color: 'rgba(0,0,0,0.6)' }],
+      3: [{ x: 0, y: 0, blur: 0, spread: 1, color: 'rgba(255,255,255,0.08)' }, { x: 0, y: 32, blur: 72, spread: -12, color: 'rgba(0,0,0,0.75)' }],
+    },
+  },
+  colors: {
+    light: {
+      bg: '#FFFFFF', surface: '#FFFFFF', raised: '#FFFFFF', sunken: '#F4F4F3', scrim: 'rgba(20,20,20,0.4)',
+      border: '#E8E8E6', controlBorder: '#8C8C88', borderStrong: '#222222',
+      text: '#222222', muted: '#66665F',
+      primary: '#222222', onPrimary: '#FFFFFF', primaryHover: '#000000',
+      focus: '#222222', selection: '#FFD9DF',
+      tones: {
+        accent: tone('#D42A4B', '#FFFFFF', '#FDE6EA', '#9B1332'),
+        success: tone('#1A7F4B', '#FFFFFF', '#E0F3E8', '#0F5A33'),
+        warning: tone('#A15F00', '#FFFFFF', '#FFF0D2', '#7A4A00'),
+        danger: tone('#C9261F', '#FFFFFF', '#FCE4E2', '#8F1812'),
+        info: tone('#1F63D8', '#FFFFFF', '#E1EBFC', '#15439A'),
+      },
+      categories: {
+        c1: tone('#D42A4B', '#FFFFFF', '#FDE6EA', '#9B1332'),
+        c2: tone('#A15F00', '#FFFFFF', '#FFF0D2', '#7A4A00'),
+        c3: tone('#1A7F4B', '#FFFFFF', '#E0F3E8', '#0F5A33'),
+        c4: tone('#1F63D8', '#FFFFFF', '#E1EBFC', '#15439A'),
+        c5: tone('#6B4FD8', '#FFFFFF', '#EBE6FB', '#45309E'),
+        c6: tone('#0E7C86', '#FFFFFF', '#DAF1F3', '#095A62'),
+      },
+    },
+    dark: {
+      bg: '#141414', surface: '#1C1C1C', raised: '#242424', sunken: '#0E0E0E', scrim: 'rgba(0,0,0,0.6)',
+      border: '#2C2C2C', controlBorder: '#7A7A76', borderStrong: '#ECECEA',
+      text: '#ECECEA', muted: '#A2A29C',
+      primary: '#ECECEA', onPrimary: '#141414', primaryHover: '#FFFFFF',
+      focus: '#ECECEA', selection: '#5A1B29',
+      tones: {
+        accent: tone('#FF5C7A', '#1A0509', '#3F1520', '#FFB3C0'),
+        success: tone('#46C583', '#06190F', '#133323', '#A5E8C4'),
+        warning: tone('#F0A53C', '#231400', '#40300F', '#FFD594'),
+        danger: tone('#FF7068', '#220806', '#431714', '#FFBDB8'),
+        info: tone('#6E9CFF', '#07142E', '#16264C', '#BCD1FF'),
+      },
+      categories: {
+        c1: tone('#FF5C7A', '#1A0509', '#3F1520', '#FFB3C0'),
+        c2: tone('#F0A53C', '#231400', '#40300F', '#FFD594'),
+        c3: tone('#46C583', '#06190F', '#133323', '#A5E8C4'),
+        c4: tone('#6E9CFF', '#07142E', '#16264C', '#BCD1FF'),
+        c5: tone('#9F8CFF', '#120A33', '#2A2250', '#D3C9FF'),
+        c6: tone('#3BC4D0', '#031C1F', '#10343A', '#A3E6EC'),
+      },
+    },
+  },
+}

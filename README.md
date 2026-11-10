@@ -1,6 +1,6 @@
 # Inkblot
 
-> Scientific and technical report generator and component library from MDX.
+Scientific and technical report generator and component library from MDX.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -14,10 +14,33 @@ Inkblot is both a **reusable library** and a **command-line tool** for authoring
 - 🌐 **Hugo-like Multi-Page Site Engine**: Build complete report sites and documentation portals with `inkblot.config.ts`, file-system routing, global navigation, sidebars, search index, and on-demand SSR.
 - ⚛️ **Next.js Adapter & React API**: Mount full report sites or individual documents in Next.js App Router (`inkblot/next`) with SSR, SSG, or ISR.
 - 📊 **Scientific Primitives**: Pre-built components for Dot/Forest plots with 95% confidence intervals, XY trade-off frontiers, data tables, summary tables, question callouts, asides, glossaries, and KaTeX math.
-- 🎨 **Configurable Themes**: Beautiful typography inspired by academic monographs (*Literata* + *Inter*), plus modern sans and classic LaTeX themes with light and dark mode.
+- 🎨 **Configurable Themes**: Beautiful typography inspired by academic monographs (*Literata* + *Inter*), plus Classic and all seven shared design languages (Industrie, Cozy, Modern, Colorful, Glass, Paper, Journal), each with light and dark mode.
+- 🧩 **shadcn UI**: Radix Luma components from preset `b1aIdeaGW`, scoped compiled styles, and optional language pickers for sites and standalone reports.
 - ⚡ **Zero-Runtime SVG Charts**: Semantic SVG charts rendered on the server with interactive tooltips and accessible data table toggles.
 
 ---
+
+## Installation
+
+Install the CLI globally:
+
+```bash
+npm install -g inkblot
+```
+
+Or run it without installing:
+
+```bash
+npx inkblot build report.mdx
+```
+
+As a library (React / Next.js), install it as a dependency:
+
+```bash
+npm install inkblot
+```
+
+Requires Node.js 18 or newer.
 
 ## Quickstart
 
@@ -97,6 +120,15 @@ Full documentation is available in the [`docs/`](./docs) directory:
 
 ---
 
+## Development
+
+```bash
+bun install
+bun run build     # compile dist/ (tsup + assets)
+bun run typecheck
+bun run test
+```
+
 ## License
 
-MIT
+MIT — see [LICENSE](./LICENSE).

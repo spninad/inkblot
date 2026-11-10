@@ -107,6 +107,9 @@ export default defineConfig({
     ],
   },
 
+  // Optional reader language picker. Omit for a fixed language.
+  themePicker: { themes: ['academic', 'journal', 'paper'] },
+
   // Search: enables client-side instant search modal (Ctrl+K or /)
   search: true,
 });

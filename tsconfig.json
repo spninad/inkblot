@@ -14,7 +14,12 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "inkblot/client": ["src/interactive/public.tsx"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "examples"]

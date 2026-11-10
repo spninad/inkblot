@@ -1,4 +1,4 @@
-import type { ThemeConfig } from '../themes/types.js';
+import type { ThemeConfig, ThemePickerConfig } from '../themes/types.js';
 import type { ReportFrontmatter, TocEntry } from '../compiler/types.js';
 
 export interface NavItem {
@@ -29,6 +29,7 @@ export interface SiteConfig {
   description?: string;
   logo?: string;
   theme?: string | ThemeConfig;
+  themePicker?: ThemePickerConfig;
   contentDir?: string; // Default: 'content'
   outDir?: string; // Default: 'dist'
   publicDir?: string; // Default: 'public'

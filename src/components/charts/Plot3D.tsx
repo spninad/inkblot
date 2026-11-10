@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '../../ui/button.js';
 
 export interface Plot3DProps {
   id?: string;
@@ -23,7 +24,8 @@ export const Plot3D: React.FC<Plot3DProps> = ({
   data,
   className = '',
 }) => {
-  const containerId = id || `inkblot-3d-${Math.random().toString(36).slice(2, 8)}`;
+  const generatedId = React.useId();
+  const containerId = id || `inkblot-3d-${generatedId}`;
   const dataPayload = data ? JSON.stringify(data) : '';
 
   return (
@@ -44,9 +46,9 @@ export const Plot3D: React.FC<Plot3DProps> = ({
           width,
           height: `${height}px`,
           position: 'relative',
-          borderRadius: '10px',
+          borderRadius: 'var(--card-radius)',
           overflow: 'hidden',
-          border: '1px solid color-mix(in srgb, var(--rule) 70%, transparent)',
+          border: 0,
           background: 'var(--surface)',
         }}
       >
@@ -67,7 +69,7 @@ export const Plot3D: React.FC<Plot3DProps> = ({
           <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
             Interactive 3D {type === 'loss-surface' ? 'Loss Landscape' : 'Latent Manifold'}
           </div>
-          <div>Drag to rotate • Scroll to zoom</div>
+          <div>Drag to rotate • Ctrl + scroll to zoom</div>
         </div>
 
         {/* Floating control buttons */}
@@ -81,48 +83,26 @@ export const Plot3D: React.FC<Plot3DProps> = ({
             zIndex: 10,
           }}
         >
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             type="button"
             className="inkblot-3d-btn"
             data-3d-action="rotate"
             title="Toggle Auto-Rotation"
-            style={{
-              background: 'color-mix(in srgb, var(--surface) 90%, transparent)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid color-mix(in srgb, var(--rule) 85%, transparent)',
-              borderRadius: '6px',
-              padding: '5px 10px',
-              fontSize: '11.5px',
-              fontWeight: 500,
-              fontFamily: 'var(--sans)',
-              color: 'var(--ink-2)',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-            }}
           >
             Auto-Rotate
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             type="button"
             className="inkblot-3d-btn"
             data-3d-action="reset"
             title="Reset Camera"
-            style={{
-              background: 'color-mix(in srgb, var(--surface) 90%, transparent)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid color-mix(in srgb, var(--rule) 85%, transparent)',
-              borderRadius: '6px',
-              padding: '5px 10px',
-              fontSize: '11.5px',
-              fontWeight: 500,
-              fontFamily: 'var(--sans)',
-              color: 'var(--ink-2)',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-            }}
           >
             Reset
-          </button>
+          </Button>
         </div>
       </div>
 

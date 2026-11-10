@@ -27,7 +27,7 @@ Compiles raw MDX content into an executable report object, extracting frontmatte
 import { compileReport } from 'inkblot';
 
 const compiled = await compileReport(mdxString, {
-  theme: 'academic', // 'academic' | 'modern' | 'classic'
+  theme: 'academic', // Any built-in or registered theme
   remarkPlugins: [], // Optional unified remark plugins
   rehypePlugins: [], // Optional unified rehype plugins
 });
@@ -65,10 +65,13 @@ const result = await renderReportToHtml(mdxString, {
   theme: 'academic',
   standalone: true,  // false returns component markup without <!doctype html>
   embedFonts: false,
+  themePicker: { themes: ['academic', 'journal', 'paper'] },
+  clientScript: true, // false exposes all tab content and emits no scripts
 });
 
 console.log(result.html); // Full HTML document string
 console.log(result.css);  // Extracted stylesheet
+console.log(result.script); // Self-contained runtime for component-only HTML output
 ```
 
 ---
@@ -83,7 +86,8 @@ Inside `app/reports/[slug]/page.tsx`:
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { notFound } from 'next/navigation';
-import { compileReport, ReportViewer, ReportProvider } from 'inkblot';
+import { compileReport } from 'inkblot';
+import { ReportViewer, ReportProvider } from 'inkblot/client';
 import 'inkblot/style.css';
 
 interface Props {
@@ -167,3 +171,12 @@ export function MyReportPage({ compiled }) {
   );
 }
 ```
+
+
+## Client controls and appearance options
+
+Use `inkblot/client` for `ReportProvider`, `ReportViewer`, `Tabs`, `Tab`, and `Collapse` in client components. Keep MDX compilation and HTML generation on the server. The existing MDX component names and props are preserved.
+
+`themePicker?: boolean | { themes?: string[] }` is accepted by site configuration, report frontmatter, rendering options, `ReportProvider`, and `ReportViewer`. It defaults to `false`. The configured `theme` remains the default language; `true` enables all built-ins, and an explicit list restricts the choices. Rendering options override frontmatter; viewer props override provider appearance settings. See [Theme Engine & Styling](./themes.md) for persistence, custom semantic colors, and embedding details.
+
+If you consume component-only HTML strings, include the returned CSS and run `result.script` once after inserting the HTML. Native React hosts render the client components directly and should not inject this generated-page runtime.

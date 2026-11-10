@@ -1,16 +1,18 @@
 import { academicTheme } from './academic.js';
 import { modernTheme } from './modern.js';
 import { classicTheme } from './classic.js';
-import type { ThemeConfig, BuiltinTheme } from './types.js';
+import { semanticCss } from './semantic.js';
+import { sharedThemes } from './shared.js';
+import type { ThemeConfig } from './types.js';
 
 export * from './types.js';
+export { resolveAppearance, appearanceInit } from './appearance.js';
 export { academicTheme, modernTheme, classicTheme };
 
-const themeRegistry = new Map<string, ThemeConfig>([
-  ['academic', academicTheme],
-  ['modern', modernTheme],
-  ['classic', classicTheme],
-]);
+const builtinThemes = [academicTheme, classicTheme, ...sharedThemes];
+const themeRegistry = new Map<string, ThemeConfig>(
+  builtinThemes.map((theme) => [theme.name, theme]),
+);
 
 export function registerTheme(theme: ThemeConfig): void {
   themeRegistry.set(theme.name, theme);
@@ -23,90 +25,78 @@ export function getTheme(nameOrConfig: string | ThemeConfig = 'academic'): Theme
   return themeRegistry.get(nameOrConfig) || academicTheme;
 }
 
-export function generateThemeCssVariables(theme: ThemeConfig): string {
-  const lightVars = [
-    `--bg: ${theme.light.bg};`,
-    `--surface: ${theme.light.surface};`,
-    `--ink: ${theme.light.ink};`,
-    `--ink-2: ${theme.light.ink2};`,
-    `--muted: ${theme.light.muted};`,
-    `--rule: ${theme.light.rule};`,
-    `--rule-strong: ${theme.light.ruleStrong};`,
-    `--accent: ${theme.light.accent};`,
-    `--accent-soft: ${theme.light.accentSoft};`,
-    `--s0: ${theme.light.s0};`,
-    `--s1: ${theme.light.s1};`,
-    `--s2: ${theme.light.s2};`,
-    `--s3: ${theme.light.s3};`,
-    `--grid: ${theme.light.grid};`,
-    `--axis: ${theme.light.axis};`,
-    `--band: ${theme.light.band};`,
-    `--serif: ${theme.fonts.serif};`,
-    `--sans: ${theme.fonts.sans};`,
-    `--mono: ${theme.fonts.mono};`,
-  ].join('\n  ');
-
-  let darkVars = '';
-  if (theme.dark) {
-    darkVars = [
-      `--bg: ${theme.dark.bg};`,
-      `--surface: ${theme.dark.surface};`,
-      `--ink: ${theme.dark.ink};`,
-      `--ink-2: ${theme.dark.ink2};`,
-      `--muted: ${theme.dark.muted};`,
-      `--rule: ${theme.dark.rule};`,
-      `--rule-strong: ${theme.dark.ruleStrong};`,
-      `--accent: ${theme.dark.accent};`,
-      `--accent-soft: ${theme.dark.accentSoft};`,
-      `--s0: ${theme.dark.s0};`,
-      `--s1: ${theme.dark.s1};`,
-      `--s2: ${theme.dark.s2};`,
-      `--s3: ${theme.dark.s3};`,
-      `--grid: ${theme.dark.grid};`,
-      `--axis: ${theme.dark.axis};`,
-      `--band: ${theme.dark.band};`,
-    ].join('\n    ');
-  }
-
-  return `
-:root, :root[data-theme="${theme.name}"] {
-  ${lightVars}
+/** Mode and visual language are independent so switching mode preserves identity. */
+export function generateThemeCssVariables(theme: ThemeConfig, fallback = true): string {
+  const selector = `:root[data-theme="${theme.name}"]`;
+  const vars = (mode: 'light' | 'dark') => {
+    const c = theme[mode] || theme.light;
+    const names: Record<string, string> = {
+      ink2: 'ink-2',
+      ruleStrong: 'rule-strong',
+      accentSoft: 'accent-soft',
+    };
+    return (
+      Object.entries(c)
+        .map(([k, v]) => `--${names[k] || k}: ${v};`)
+        .join('\n  ') +
+      '\n  ' +
+      semanticCss(theme, mode)
+    );
+  };
+  const d = theme.design;
+  let css = `
+${fallback ? ':root, ' : ''}${selector}, :root[data-theme="${theme.name}-dark"]${theme.name === 'academic' ? ', :root[data-theme="dark"], :root[data-theme="light"]' : ''} {
+  --serif: ${theme.fonts.serif}; --sans: ${theme.fonts.sans}; --mono: ${theme.fonts.mono};
+  --display: ${d?.display || theme.fonts.sans}; --heading-weight: ${d?.headingWeight || 650};
+  --heading-tracking: ${d?.tracking ?? -0.025}em;
+  --radius: ${d?.radius ?? 10}px; --card-radius: ${d?.cardRadius ?? 12}px;
+  --duration: ${d?.duration ?? 140}ms; --ease: ${d?.ease || 'cubic-bezier(.2,.7,.1,1)'};
+  color-scheme: light;
+  ${vars('light')}
 }
-
-${
-  theme.dark
-    ? `
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    ${darkVars}
-  }
+  ${selector}:not([data-color-mode="light"]) { color-scheme: dark; ${vars('dark')} }
+}
+${selector}[data-color-mode="dark"], :root[data-theme="${theme.name}-dark"]${theme.name === 'academic' ? ', :root[data-theme="dark"]' : ''} {
+  color-scheme: dark; ${vars('dark')}
+}
+${selector}[data-color-mode="light"]${theme.name === 'academic' ? ', :root[data-theme="light"]' : ''} { color-scheme: light; ${vars('light')} }
+`.trim();
+  // Each hosted report can own a theme without altering its application's document.
+  css = css.replace(
+    /:root\[data-theme="([^"]+)"\]/g,
+    ':is(:root.inkblot-root[data-theme="$1"], .inkblot-root[data-inkblot-theme="$1"])',
+  );
+  css = css.replace(/:root(?=,)/g, ':root.inkblot-root');
+  return css;
 }
 
-:root[data-theme="dark"], :root[data-theme="${theme.name}-dark"] {
-  color-scheme: dark;
-  ${darkVars}
-}
-`
-    : ''
-}
-`.trim();
+export function getBuiltinThemes(): ThemeConfig[] {
+  return [...builtinThemes];
 }
 
-export function getFontHeadTags(themeName: string = 'academic'): string {
-  if (themeName === 'academic') {
-    return `
-<link rel="preconnect" href="https://fonts.googleapis.com">
+export function getBuiltinThemeCss(): string {
+  return getBuiltinThemes()
+    .map((theme) => generateThemeCssVariables(theme, false))
+    .join('\n');
+}
+
+/** Runs in the head, before styles paint. Do not change data-theme here. */
+export const THEME_INIT_SCRIPT = `(function(){try{var m=localStorage.getItem('inkblot-theme-mode');if(m==='light'||m==='dark')document.documentElement.setAttribute('data-color-mode',m)}catch(e){}})();`;
+
+export function getFontHeadTags(input: string | string[] = 'academic'): string {
+  const names = Array.isArray(input) ? input : [input];
+  if (names.length === 1 && names[0] === 'classic') return '';
+  const families = ['Inter:wght@400;450;500;600;650;700'];
+  if (names.includes('academic'))
+    families.push('Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400');
+  if (names.includes('cozy')) families.push('Crimson+Pro:wght@400;500;600;700');
+  if (names.includes('journal'))
+    families.push(
+      'Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600',
+      'JetBrains+Mono:wght@400;500',
+    );
+  return `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap">
-`.trim();
-  }
-  if (themeName === 'modern') {
-    return `
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-`.trim();
-  }
-  return '';
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${families.join('&family=')}&display=swap">`;
 }

@@ -1,0 +1,16 @@
+{
+  "code": "b1aIdeaGW",
+  "source": "https://ui.shadcn.com/create?preset=b1aIdeaGW",
+  "cliVersion": "4.23.0",
+  "base": "radix",
+  "style": "luma",
+  "baseColor": "neutral",
+  "theme": "indigo",
+  "chartColor": "blue",
+  "font": "inter",
+  "fontHeading": "inherit",
+  "radius": "default",
+  "iconLibrary": "lucide",
+  "menuAccent": "subtle",
+  "menuColor": "default"
+}

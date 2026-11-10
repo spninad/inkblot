@@ -69,7 +69,7 @@ We propose energy scoring.
   console.log('Test 4: Configurable Themes (modern)');
   const modernRes = await renderReportToHtml(sampleMdx, { theme: 'modern', standalone: true });
   assert.ok(modernRes.html.includes('data-theme="modern"'));
-  assert.ok(modernRes.css.includes('--bg: #f8fafc;'), 'Modern theme background should be used');
+  assert.ok(modernRes.css.includes(`--bg: ${modernTheme.light.bg};`), 'Modern theme background should be used');
   console.log('  ✅ Modern theme passed\n');
 
   // Test 5: Scientific Primitives rendering (Tables, Question, Aside, Equations)

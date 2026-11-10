@@ -1,97 +1,50 @@
+'use client';
 import React from 'react';
+import { StaticControlsContext } from '../../interactive/context.js';
+import { TabsControl, CollapseControl } from '../../interactive/tabs.js';
 
 export interface TabItem {
   id?: string;
   label: string;
   content: React.ReactNode;
 }
-
 export interface TabsProps {
   items?: TabItem[];
   defaultTab?: number;
   children?: React.ReactNode;
 }
-
-export const Tabs: React.FC<TabsProps> = ({
-  items,
-  defaultTab = 0,
-  children,
-}) => {
-  // If items are provided as an array
-  if (items && items.length > 0) {
+export const Tabs: React.FC<TabsProps> = ({ items, defaultTab = 0, children }) => {
+  const context = React.useContext(StaticControlsContext);
+  const tabs = items?.length
+    ? items
+    : React.Children.toArray(children)
+        .filter(React.isValidElement)
+        .map((child: any, i) => ({
+          label: child.props.label || child.props.title || `Tab ${i + 1}`,
+          content: child.props.children,
+        }));
+  if (!context) return <TabsControl items={tabs} defaultTab={defaultTab} />;
+  if (!context.enabled)
     return (
-      <div className="inkblot-tabs">
-        <div className="inkblot-tab-nav" role="tablist">
-          {items.map((item, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className={`inkblot-tab-btn ${idx === defaultTab ? 'active' : ''}`}
-              role="tab"
-              aria-selected={idx === defaultTab}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <div className="inkblot-tab-panels">
-          {items.map((item, idx) => (
-            <div
-              key={idx}
-              className={`inkblot-tab-panel ${idx === defaultTab ? 'active' : ''}`}
-              role="tabpanel"
-            >
-              {item.content}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // If children are Tab components
-  const validChildren = React.Children.toArray(children) as React.ReactElement<any>[];
-  return (
-    <div className="inkblot-tabs">
-      <div className="inkblot-tab-nav" role="tablist">
-        {validChildren.map((child, idx) => {
-          const label = child.props?.label || child.props?.title || `Tab ${idx + 1}`;
-          return (
-            <button
-              key={idx}
-              type="button"
-              className={`inkblot-tab-btn ${idx === defaultTab ? 'active' : ''}`}
-              role="tab"
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-      <div className="inkblot-tab-panels">
-        {validChildren.map((child, idx) => (
-          <div
-            key={idx}
-            className={`inkblot-tab-panel ${idx === defaultTab ? 'active' : ''}`}
-            role="tabpanel"
-          >
-            {child.props?.children}
-          </div>
+      <div className="inkblot-tabs-static">
+        {tabs.map((tab, i) => (
+          <section key={i}>
+            <h3>{tab.label}</h3>
+            {tab.content}
+          </section>
         ))}
       </div>
-    </div>
-  );
+    );
+  return context.island('tabs', {
+    items: tabs.map((tab) => ({ label: tab.label, html: context.content(tab.content) })),
+    defaultTab,
+  });
 };
-
 export interface TabProps {
   label: string;
   children: React.ReactNode;
 }
-
-export const Tab: React.FC<TabProps> = ({ children }) => {
-  return <>{children}</>;
-};
-
+export const Tab: React.FC<TabProps> = ({ children }) => <>{children}</>;
 export interface CollapseProps {
   summary?: React.ReactNode;
   title?: React.ReactNode;
@@ -99,7 +52,6 @@ export interface CollapseProps {
   children: React.ReactNode;
   className?: string;
 }
-
 export const Collapse: React.FC<CollapseProps> = ({
   summary,
   title,
@@ -107,11 +59,25 @@ export const Collapse: React.FC<CollapseProps> = ({
   children,
   className = '',
 }) => {
-  const displaySummary = summary ?? title ?? 'Details';
-  return (
-    <details className={`inkblot-collapse ${className}`.trim()} open={open}>
-      <summary>{displaySummary}</summary>
-      <div className="inkblot-collapse-content">{children}</div>
-    </details>
-  );
+  const context = React.useContext(StaticControlsContext);
+  const label = summary ?? title ?? 'Details';
+  if (!context)
+    return (
+      <CollapseControl summary={label} open={open} className={className}>
+        {children}
+      </CollapseControl>
+    );
+  if (!context.enabled)
+    return (
+      <details open className={className}>
+        <summary>{label}</summary>
+        {children}
+      </details>
+    );
+  return context.island('collapse', {
+    summaryHtml: context.content(label),
+    html: context.content(children),
+    open,
+    className,
+  });
 };

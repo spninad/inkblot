@@ -37,7 +37,7 @@ program
     'Output format: standalone (single HTML), dir (static directory), or zip',
     'standalone'
   )
-  .option('-t, --theme <theme>', 'Theme name (academic, modern, classic)', 'academic')
+  .option('-t, --theme <theme>', 'Theme name (academic, classic, industrie, cozy, modern, colorful, glass, paper, journal)')
   .option('-c, --config <config>', 'Path to custom site configuration file')
   .option('-z, --zip', 'Also package static output into a ZIP archive', false)
   .option('--embed-fonts', 'Inline web fonts as base64 for 100% offline self-containment', false)

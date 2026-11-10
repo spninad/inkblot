@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  Table as UiTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '../ui/table.js';
 
 // Layout
 export * from './layout/Report.js';
@@ -79,6 +88,12 @@ export const defaultComponents: Record<string, React.ComponentType<any>> = {
   Math: Equation, // Alias
 
   // Enhanced HTML primitives
-  table: (props: any) => <div className="tablewrap"><table {...props} /></div>,
-  blockquote: (props: any) => <div className="question" {...props} />,
+  table: (props: any) => <UiTable {...props} />,
+  thead: TableHeader,
+  tbody: TableBody,
+  tr: TableRow,
+  th: TableHead,
+  td: TableCell,
+  caption: TableCaption,
+  blockquote: (props: any) => <Question {...props} />,
 };

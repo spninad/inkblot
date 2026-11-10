@@ -33,7 +33,7 @@ inkblot build <input> [options]
 | :--- | :--- | :--- | :--- |
 | `--output <path>` | `-o` | Output file path or directory. Inferred from format if omitted. | `<basename>.html` |
 | `--format <type>` | `-f` | Output format: `standalone`, `dir`, or `zip`. | `standalone` |
-| `--theme <name>` | `-t` | Select theme (`academic`, `modern`, `classic`). | `academic` |
+| `--theme <name>` | `-t` | Select any built-in or registered theme. | frontmatter, then `academic` |
 | `--zip` | `-z` | Package the output into a `.zip` archive alongside HTML. | `false` |
 | `--embed-fonts` | | Inlines web fonts as base64 data URIs for 100% offline self-containment. | `false` |
 | `--quiet` | `-q` | Suppress build logs. | `false` |

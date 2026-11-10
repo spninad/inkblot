@@ -1,10 +1,10 @@
 import { defineConfig } from 'tsup';
-import fs from 'node:fs';
-import path from 'node:path';
+import { buildAssets } from './scripts/build-assets';
 
 export default defineConfig({
   entry: {
-    'index': 'src/index.ts',
+    index: 'src/index.ts',
+    client: 'src/interactive/public.tsx',
     'components/index': 'src/components/index.tsx',
     'themes/index': 'src/themes/index.ts',
     'site/index': 'src/site/index.ts',
@@ -12,25 +12,14 @@ export default defineConfig({
     'bin/inkblot': 'src/bin/inkblot.ts',
   },
   format: ['esm'],
-  dts: true,
+  external: ['inkblot/client'],
   clean: true,
   sourcemap: true,
-  splitting: false,
+  splitting: true,
   shims: true,
+  dts: true,
   banner: {
     js: `/** Inkblot Scientific Report & Site Engine **/`,
   },
-  onSuccess: async () => {
-    // Ensure dist directory has the bundled CSS
-    const srcCss = path.resolve('src/themes/styles/inkblot.css');
-    const distCss = path.resolve('dist/style.css');
-    if (fs.existsSync(srcCss)) {
-      fs.copyFileSync(srcCss, distCss);
-    }
-    const srcSiteCss = path.resolve('src/themes/styles/site.css');
-    const distSiteCss = path.resolve('dist/site.css');
-    if (fs.existsSync(srcSiteCss)) {
-      fs.copyFileSync(srcSiteCss, distSiteCss);
-    }
-  },
+  onSuccess: buildAssets,
 });

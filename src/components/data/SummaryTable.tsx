@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  Table as UiTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '../../ui/table.js';
 
 export interface SummaryTableRow {
   id?: string | number;
@@ -22,39 +31,35 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
   rows,
 }) => {
   return (
-    <div className="tablewrap">
-      <table className="sumtable">
-        {caption && <caption>{caption}</caption>}
-        <thead>
-          <tr>
+    <div>
+      <UiTable className="sumtable">
+        {caption && <TableCaption>{caption}</TableCaption>}
+        <TableHeader>
+          <TableRow>
             {headers.map((h, i) => (
-              <th key={i}>{h}</th>
+              <TableHead key={i}>{h}</TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((r, i) => (
-            <tr key={i}>
-              <td>{r.id != null ? r.id : i + 1}</td>
-              <td>
-                {r.href ? (
-                  <a href={r.href}>{r.title}</a>
-                ) : (
-                  <span>{r.title}</span>
-                )}
+            <TableRow key={i}>
+              <TableCell>{r.id != null ? r.id : i + 1}</TableCell>
+              <TableCell>
+                {r.href ? <a href={r.href}>{r.title}</a> : <span>{r.title}</span>}
                 {r.subtitle && (
                   <>
                     <br />
                     <span className="small">{r.subtitle}</span>
                   </>
                 )}
-              </td>
-              <td>{r.setting}</td>
-              <td>{r.outcome}</td>
-            </tr>
+              </TableCell>
+              <TableCell>{r.setting}</TableCell>
+              <TableCell>{r.outcome}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </UiTable>
     </div>
   );
 };

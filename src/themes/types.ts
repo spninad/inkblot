@@ -29,6 +29,30 @@ export interface ThemeConfig {
   light: ThemeColors;
   dark?: ThemeColors;
   fonts: ThemeFonts;
+  /** Optional shadcn semantic color overrides, keyed without the --ib- prefix. */
+  ui?: { light: Record<string, string>; dark?: Record<string, string> };
+  /** Layout and interaction values from the shared design language. */
+  design?: {
+    display: string;
+    headingWeight: number;
+    tracking: number;
+    radius: number;
+    cardRadius: number;
+    duration: number;
+    ease: string;
+  };
 }
 
-export type BuiltinTheme = 'academic' | 'modern' | 'classic';
+export type BuiltinTheme =
+  | 'academic'
+  | 'classic'
+  | 'industrie'
+  | 'cozy'
+  | 'modern'
+  | 'colorful'
+  | 'glass'
+  | 'paper'
+  | 'journal';
+
+export type ColorMode = 'light' | 'dark' | 'system';
+export type ThemePickerConfig = boolean | { themes?: string[] };

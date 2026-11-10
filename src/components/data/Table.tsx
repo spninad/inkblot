@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  Table as UiTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '../../ui/table.js';
 
 export interface TableColumn<T = any> {
   key: string;
@@ -29,26 +38,26 @@ export const Table = <T extends Record<string, any>>({
   // If children are provided directly (e.g. pure standard markdown table or JSX table)
   if (children) {
     return (
-      <div className={`tablewrap ${className}`.trim()}>
-        <table>
-          {caption && <caption>{caption}</caption>}
+      <div className={className || undefined}>
+        <UiTable>
+          {caption && <TableCaption>{caption}</TableCaption>}
           {children}
-        </table>
+        </UiTable>
       </div>
     );
   }
 
   return (
-    <div className={`tablewrap ${className}`.trim()}>
-      <table>
-        {caption && <caption>{caption}</caption>}
+    <div className={className || undefined}>
+      <UiTable>
+        {caption && <TableCaption>{caption}</TableCaption>}
         {columns && (
-          <thead>
-            <tr>
+          <TableHeader>
+            <TableRow>
               {columns.map((col) => {
                 const isNum = col.numeric || col.align === 'right';
                 return (
-                  <th
+                  <TableHead
                     key={col.key}
                     className={isNum ? 'num' : undefined}
                     style={{
@@ -57,38 +66,38 @@ export const Table = <T extends Record<string, any>>({
                     }}
                   >
                     {col.label}
-                  </th>
+                  </TableHead>
                 );
               })}
-            </tr>
-          </thead>
+            </TableRow>
+          </TableHeader>
         )}
         {data && (
-          <tbody>
+          <TableBody>
             {data.map((row, rowIdx) => {
               const isHl = highlightRows.includes(rowIdx);
               return (
-                <tr key={rowIdx} className={isHl ? 'hl' : undefined}>
+                <TableRow key={rowIdx} className={isHl ? 'hl' : undefined}>
                   {columns?.map((col) => {
                     const isNum = col.numeric || col.align === 'right';
                     const rawVal = row[col.key];
                     const content = col.render ? col.render(rawVal, row, rowIdx) : rawVal;
                     return (
-                      <td
+                      <TableCell
                         key={col.key}
                         className={isNum ? 'num' : undefined}
                         style={{ textAlign: col.align || (col.numeric ? 'right' : 'left') }}
                       >
                         {content}
-                      </td>
+                      </TableCell>
                     );
                   })}
-                </tr>
+                </TableRow>
               );
             })}
-          </tbody>
+          </TableBody>
         )}
-      </table>
+      </UiTable>
     </div>
   );
 };

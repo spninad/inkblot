@@ -1,23 +1,17 @@
 import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderStaticPage } from '../interactive/static.js';
 import { run } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
 import { compileReport } from './compile.js';
 import { defaultComponents } from '../components/index.js';
 import { Report } from '../components/layout/Report.js';
-import { getTheme, getFontHeadTags } from '../themes/index.js';
-import { getFullReportCss } from './css.js';
-import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
-import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
-import type {
-  CompiledReport,
-  RenderHtmlOptions,
-  RenderHtmlResult,
-} from './types.js';
+import { getTheme, getFontHeadTags, resolveAppearance, appearanceInit } from '../themes/index.js';
+import { getFullReportCss, getBrowserScript } from './css.js';
+import type { CompiledReport, RenderHtmlOptions, RenderHtmlResult } from './types.js';
 
 export async function renderReportToHtml(
   sourceOrCompiled: string | CompiledReport,
-  options: RenderHtmlOptions = {}
+  options: RenderHtmlOptions = {},
 ): Promise<RenderHtmlResult> {
   const compiled: CompiledReport =
     typeof sourceOrCompiled === 'string'
@@ -25,12 +19,12 @@ export async function renderReportToHtml(
       : sourceOrCompiled;
 
   const themeName =
-    typeof options.theme === 'string'
-      ? options.theme
-      : compiled.frontmatter.theme || 'academic';
+    typeof options.theme === 'string' ? options.theme : compiled.frontmatter.theme || 'academic';
 
   const theme = getTheme(options.theme || themeName);
 
+  const picker = options.themePicker ?? compiled.frontmatter.themePicker ?? false;
+  const appearance = resolveAppearance(theme, options.clientScript === false ? false : picker);
   // Evaluate the compiled MDX function body
   const { default: MDXContent } = await run(compiled.code, runtime);
 
@@ -47,37 +41,43 @@ export async function renderReportToHtml(
       date: compiled.frontmatter.date,
       abstract: compiled.frontmatter.abstract,
       toc: compiled.toc,
-      theme: theme.name,
+      theme,
+      themePicker: options.clientScript === false ? false : picker,
     },
-    React.createElement(MDXContent, { components: mergedComponents })
+    React.createElement(MDXContent, { components: mergedComponents }),
   );
 
-  const bodyHtml = renderToStaticMarkup(reportElement);
-  const css = getFullReportCss(theme);
+  const bodyHtml = renderStaticPage(reportElement, options.clientScript !== false);
+  const css = getFullReportCss(
+    theme,
+    appearance.themes.map((t) => t.name),
+  );
 
+  const script = options.clientScript !== false ? getBrowserScript() : '';
   const standalone = options.standalone !== false;
 
   if (!standalone) {
     return {
       html: bodyHtml,
+      script,
       css,
       frontmatter: compiled.frontmatter,
       toc: compiled.toc,
     };
   }
 
-  const fontTags = getFontHeadTags(theme.name);
-  const clientScript =
-    options.clientScript !== false
-      ? `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`
-      : '';
+  const fontTags = getFontHeadTags(
+    appearance.themes.length ? appearance.themes.map((t) => t.name) : theme.name,
+  );
+  const clientScript = script;
 
   const fullHtml = `<!doctype html>
-<html lang="en" data-theme="${theme.name}">
+<html lang="en" class="inkblot-root" data-inkblot-root data-inkblot-generated data-theme="${theme.name}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${compiled.frontmatter.title || 'Scientific Report'}</title>
+  ${options.clientScript !== false ? `<script>${appearanceInit(appearance)}</script>` : ''}
   ${fontTags}
   <style>
 ${css}
@@ -92,6 +92,7 @@ ${css}
 
   return {
     html: fullHtml,
+    script,
     css,
     frontmatter: compiled.frontmatter,
     toc: compiled.toc,

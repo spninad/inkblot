@@ -4,8 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const archiver = require('archiver');
 import { renderReportToHtml } from '../compiler/render.js';
-import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
-import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
+import { getTheme, getFontHeadTags, resolveAppearance, appearanceInit } from '../themes/index.js';
 import type { ThemeConfig } from '../themes/types.js';
 
 export interface BundleOptions {
@@ -86,7 +85,12 @@ export async function bundleReport(options: BundleOptions): Promise<BundleResult
   fs.mkdirSync(assetsDir, { recursive: true });
 
   // Render HTML with external stylesheet and script references
-  const { html: innerHtml, css, frontmatter } = await renderReportToHtml(rawMdx, {
+  const {
+    html: innerHtml,
+    css,
+    frontmatter,
+    script,
+  } = await renderReportToHtml(rawMdx, {
     theme: options.theme,
     standalone: false,
   });
@@ -96,23 +100,19 @@ export async function bundleReport(options: BundleOptions): Promise<BundleResult
   const indexHtmlFile = path.join(targetDir, 'index.html');
 
   fs.writeFileSync(styleFile, css, 'utf-8');
-  fs.writeFileSync(
-    scriptFile,
-    `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`,
-    'utf-8'
-  );
+  fs.writeFileSync(scriptFile, script, 'utf-8');
 
-  const themeName = (typeof options.theme === 'string' ? options.theme : frontmatter.theme) || 'academic';
+  const themeName = getTheme(options.theme || frontmatter.theme || 'academic').name;
 
+  const appearance = resolveAppearance(options.theme || frontmatter.theme, frontmatter.themePicker);
   const fullDirHtml = `<!doctype html>
-<html lang="en" data-theme="${themeName}">
+<html lang="en" class="inkblot-root" data-inkblot-root data-inkblot-generated data-theme="${themeName}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${frontmatter.title || 'Scientific Report'}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap">
+  <script>${appearanceInit(appearance)}</script>
+  ${getFontHeadTags(appearance.themes.length ? appearance.themes.map((t) => t.name) : themeName)}
   <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
@@ -128,9 +128,10 @@ export async function bundleReport(options: BundleOptions): Promise<BundleResult
 
   // 3. ZIP Packaging if requested or if format is zip
   if (options.zip || format === 'zip') {
-    zipPath = options.outputPath && options.outputPath.endsWith('.zip')
-      ? options.outputPath
-      : path.join(path.dirname(targetDir), `${path.basename(targetDir)}.zip`);
+    zipPath =
+      options.outputPath && options.outputPath.endsWith('.zip')
+        ? options.outputPath
+        : path.join(path.dirname(targetDir), `${path.basename(targetDir)}.zip`);
 
     await createZipFromDir(targetDir, zipPath);
     outputFiles.push(path.resolve(zipPath));

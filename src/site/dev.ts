@@ -1,9 +1,8 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderStaticPage } from '../interactive/static.js';
 import { run } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
 import { loadSiteConfig } from './config.js';
@@ -11,11 +10,8 @@ import { discoverSitePages } from './content.js';
 import { SiteLayout } from './layout/SiteLayout.js';
 import { Report } from '../components/layout/Report.js';
 import { defaultComponents } from '../components/index.js';
-import { getTheme, getFontHeadTags } from '../themes/index.js';
-import { getFullReportCss, getSiteCss } from '../compiler/css.js';
-import { INKBLOT_CLIENT_SCRIPT } from '../runtime/client.js';
-import { INKBLOT_THREE_SCRIPT } from '../runtime/three-runtime.js';
-import { INKBLOT_SITE_SCRIPT } from './runtime.js';
+import { getTheme, getFontHeadTags, resolveAppearance, appearanceInit } from '../themes/index.js';
+import { getFullReportCss, getSiteCss, getBrowserScript } from '../compiler/css.js';
 
 export interface DevSiteOptions {
   cwd?: string;
@@ -31,21 +27,28 @@ export async function devSite(options: DevSiteOptions = {}): Promise<void> {
   const { config, configPath } = await loadSiteConfig(cwd, options.configPath);
   const contentDir = path.resolve(cwd, config.contentDir || 'content');
 
+  const assetBase = (config.basePath || '/').replace(/\/$/, '') + '/';
   const sseClients: http.ServerResponse[] = [];
 
   const theme = getTheme(config.theme || 'academic');
-  const baseReportCss = getFullReportCss(theme);
+  const appearance = resolveAppearance(theme, config.themePicker, config.basePath || '/');
+  const baseReportCss = getFullReportCss(
+    theme,
+    appearance.themes.map((t) => t.name),
+  );
   const siteCss = getSiteCss();
   const fullCss = `${baseReportCss}\n\n${siteCss}`;
-  const combinedJs = `${INKBLOT_CLIENT_SCRIPT}\n\n${INKBLOT_SITE_SCRIPT}\n\n${INKBLOT_THREE_SCRIPT}`;
-  const fontTags = getFontHeadTags(theme.name);
+  const combinedJs = getBrowserScript();
+  const fontTags = getFontHeadTags(
+    appearance.themes.length ? appearance.themes.map((t) => t.name) : theme.name,
+  );
 
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || '/', `http://localhost:${port}`);
     let pathname = decodeURIComponent(url.pathname);
 
     // SSE live-reload endpoint
-    if (pathname === '/_inkblot_reload') {
+    if (pathname.endsWith('/_inkblot_reload')) {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -102,7 +105,10 @@ export async function devSite(options: DevSiteOptions = {}): Promise<void> {
       const { pages, sidebar } = await discoverSitePages(cwd, config);
 
       // Normalize pathname
-      let cleanRoute = pathname;
+      let cleanRoute =
+        assetBase !== '/' && pathname.startsWith(assetBase)
+          ? '/' + pathname.slice(assetBase.length)
+          : pathname;
       if (cleanRoute.length > 1 && cleanRoute.endsWith('/')) {
         cleanRoute = cleanRoute.slice(0, -1);
       }
@@ -138,8 +144,9 @@ export async function devSite(options: DevSiteOptions = {}): Promise<void> {
           abstract: matchedPage.frontmatter.abstract,
           toc: matchedPage.toc,
           theme: theme.name,
+          embedded: true,
         },
-        React.createElement(MDXContent, { components: defaultComponents })
+        React.createElement(MDXContent, { components: defaultComponents }),
       );
 
       const siteElement = React.createElement(
@@ -150,15 +157,15 @@ export async function devSite(options: DevSiteOptions = {}): Promise<void> {
           sidebar,
           basePath: config.basePath || '/',
         },
-        reportElement
+        reportElement,
       );
 
-      const bodyHtml = renderToStaticMarkup(siteElement);
+      const bodyHtml = renderStaticPage(siteElement);
 
       const reloadScript = `
 <script>
   (function() {
-    var es = new EventSource('/_inkblot_reload');
+    var es = new EventSource('${assetBase}_inkblot_reload');
     es.onmessage = function(e) {
       if (e.data === 'reload') {
         console.log('⚡ Site changed, reloading...');
@@ -170,18 +177,19 @@ export async function devSite(options: DevSiteOptions = {}): Promise<void> {
 `;
 
       const pageHtml = `<!doctype html>
-<html lang="en" data-theme="${theme.name}">
+<html lang="en" class="inkblot-root" data-inkblot-root data-inkblot-generated data-theme="${theme.name}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${matchedPage.frontmatter.title ? `${matchedPage.frontmatter.title} | ${config.title}` : config.title}</title>
+  <script>${appearanceInit(appearance)}</script>
   ${fontTags}
-  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="${assetBase}assets/site.css">
 </head>
 <body>
   <div id="inkblot-tip" class="inkblot-tip" hidden></div>
   ${bodyHtml}
-  <script src="/assets/site.js"></script>
+  <script src="${assetBase}assets/site.js"></script>
   ${reloadScript}
 </body>
 </html>`;

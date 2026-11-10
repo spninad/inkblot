@@ -69,9 +69,9 @@ export const SmallMultiples: React.FC<SmallMultiplesProps> = ({
             <div
               key={idx}
               style={{
-                border: '1px solid color-mix(in srgb, var(--rule) 70%, transparent)',
+                border: 0,
                 borderRadius: '10px',
-                padding: '14px 16px',
+                padding: '10px 12px',
                 background: 'color-mix(in srgb, var(--surface) 80%, var(--bg))',
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
               }}

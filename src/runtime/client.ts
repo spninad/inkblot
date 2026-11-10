@@ -1,6 +1,6 @@
 /**
- * Inkblot Micro Client Runtime (<3KB)
- * Handles interactive tooltips, scroll-synchronized TOC spy, and tab switching.
+ * Scientific report enhancements: chart tooltips and scroll-synchronized contents.
+ * UI controls use the separate React/shadcn runtime.
  */
 
 export const INKBLOT_CLIENT_SCRIPT = `
@@ -16,6 +16,8 @@ export const INKBLOT_CLIENT_SCRIPT = `
   }
 
   function showTip(evt, html) {
+    var scope = evt.target.closest('.inkblot-root');
+    if (scope && tip.parentElement !== scope) scope.appendChild(tip);
     tip.innerHTML = html;
     tip.hidden = false;
     moveTip(evt);
@@ -41,6 +43,8 @@ export const INKBLOT_CLIENT_SCRIPT = `
     if (top < 8) {
       top = y + 16;
     }
+    left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+    top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
     tip.style.left = left + 'px';
     tip.style.top = top + 'px';
   }
@@ -66,61 +70,30 @@ export const INKBLOT_CLIENT_SCRIPT = `
 
   // 2. TOC Active State Highlighting (IntersectionObserver)
   function initTocSpy() {
-    var links = Array.from(document.querySelectorAll('.inkblot-toc a, .toc a'));
-    if (!links.length || !('IntersectionObserver' in window)) return;
-
-    var map = new Map();
-    links.forEach(function(a) {
-      var href = a.getAttribute('href');
-      if (href && href.startsWith('#')) {
-        map.set(href.slice(1), a);
-      }
-    });
-
-    var io = new IntersectionObserver(function(entries) {
-      entries.forEach(function(e) {
-        if (e.isIntersecting) {
-          links.forEach(function(l) { l.classList.remove('active'); });
-          var activeLink = map.get(e.target.id);
-          if (activeLink) {
-            activeLink.classList.add('active');
-          }
-        }
-      });
-    }, { rootMargin: '-20% 0px -70% 0px' });
-
-    map.forEach(function(a, id) {
-      var target = document.getElementById(id);
-      if (target) io.observe(target);
-    });
-
-    // Auto-close mobile TOC on click
-    var mobileToc = document.querySelector('.inkblot-toc-mobile, .toc-mobile');
-    if (mobileToc) {
-      mobileToc.querySelectorAll('a').forEach(function(a) {
-        a.addEventListener('click', function() {
-          mobileToc.removeAttribute('open');
+    if (!('IntersectionObserver' in window)) return;
+    document.querySelectorAll('.inkblot-toc').forEach(function(nav) {
+      if (nav._tocBound) return;
+      nav._tocBound = true;
+      var page = nav.closest('.inkblot-page');
+      if (!page) return;
+      var links = Array.from(nav.querySelectorAll('a[href^="#"]'));
+      var map = new Map();
+      links.forEach(function(a) { map.set(a.getAttribute('href').slice(1), a); });
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function(a) { a.classList.remove('active'); a.removeAttribute('aria-current'); });
+          var active = map.get(entry.target.id);
+          if (active) { active.classList.add('active'); active.setAttribute('aria-current', 'location'); }
         });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+      map.forEach(function(a, id) {
+        var target = page.querySelector('#' + CSS.escape(id));
+        if (target) observer.observe(target);
       });
-    }
-  }
-
-  // 3. Interactive Tabs
-  function initTabs() {
-    var containers = document.querySelectorAll('.inkblot-tabs');
-    containers.forEach(function(wrap) {
-      if (wrap._tabsBound) return;
-      wrap._tabsBound = true;
-      var btns = wrap.querySelectorAll('.inkblot-tab-btn');
-      var panels = wrap.querySelectorAll('.inkblot-tab-panel');
-
-      btns.forEach(function(btn, idx) {
-        btn.addEventListener('click', function() {
-          btns.forEach(function(b) { b.classList.remove('active'); });
-          panels.forEach(function(p) { p.classList.remove('active'); });
-          btn.classList.add('active');
-          if (panels[idx]) panels[idx].classList.add('active');
-        });
+      var mobile = page.querySelector('.inkblot-toc-mobile');
+      if (mobile) mobile.querySelectorAll('a').forEach(function(a) {
+        a.addEventListener('click', function() { mobile.removeAttribute('open'); });
       });
     });
   }
@@ -128,9 +101,9 @@ export const INKBLOT_CLIENT_SCRIPT = `
   function initAll() {
     initTooltips();
     initTocSpy();
-    initTabs();
   }
 
+  document.addEventListener('inkblot:content-ready', initAll);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll);
   } else {
